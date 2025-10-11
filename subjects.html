@@ -1205,6 +1205,7 @@ function dedupeSubjectData(subjectId) {
  */
 fileInput.removeEventListener && fileInput.removeEventListener('change', null); // safe attempt
 /** ✅ Version améliorée : ajout illimité de fichiers sans blocage ni doublons */
+/** 🚀 Version finale sans limite de taille (jusqu'à 1 Go autorisé) */
 fileInput.addEventListener('change', async (e) => {
     if (!currentSubjectId) { 
         alert('Sélectionne d\'abord une matière'); 
@@ -1223,30 +1224,38 @@ fileInput.addEventListener('change', async (e) => {
     (data.folders || []).forEach(ff => (ff.items || []).forEach(it => existing.push(it)));
     const existingKeys = new Set(existing.map(it => `${it.type}::${it.name}::${it.size || (it.dataURL ? it.dataURL.length : 0)}`));
 
-    // Lire les fichiers en parallèle (Promise.all pour vitesse et pas de blocage)
+    // Lire les fichiers en parallèle sans limite de taille
     const newItems = await Promise.all(files.map(async (f) => {
-        const reader = new FileReader();
-        const dataURL = await new Promise(resolve => {
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(f);
-        });
-
-        const key = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size || dataURL.length}`;
+        const key = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size}`;
 
         if (existingKeys.has(key)) return null; // doublon → ignoré
+
+        let dataURL = null;
+
+        // ⚙️ Pour les fichiers > 100 Mo → on n'utilise PAS base64
+        // On crée juste un lien local (plus rapide, pas de limite mémoire)
+        if (f.size > 100 * 1024 * 1024) { 
+            dataURL = URL.createObjectURL(f);
+        } else {
+            const reader = new FileReader();
+            dataURL = await new Promise(resolve => {
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(f);
+            });
+        }
 
         return {
             id: Date.now() + Math.floor(Math.random() * 1000),
             type: currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note',
             name: f.name,
-            size: f.size || dataURL.length,
+            size: f.size,
             dataURL,
             mime: f.type || '',
             createdAt: new Date().toISOString()
         };
     }));
 
-    // Ajout de tous les fichiers valides (non null)
+    // Ajout de tous les fichiers valides
     const validItems = newItems.filter(Boolean);
     if (validItems.length > 0) {
         if (currentFolderId) {
@@ -1262,11 +1271,10 @@ fileInput.addEventListener('change', async (e) => {
     }
 
     saveSubjectData(currentSubjectId, data);
-
-    // reset input (permet re-sélectionner le même fichier après)
-    e.target.value = '';
+    e.target.value = ''; // Reset pour pouvoir re-sélectionner
     renderCurrentTab();
 });
+
 
 
 /** FORCE clearing des conteneurs au début de renderCurrentTab (dans le cas oùl'ancienne fonction
@@ -1371,7 +1379,7 @@ deleteNoteBtn.addEventListener('click', () => {
         renderCurrentTab();
     }
 });
-        // End of scr iptE
+        // End of scriptE
     </script>
 </body>
 </html> 
