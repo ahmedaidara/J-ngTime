@@ -152,14 +152,18 @@
                     <div class="flex justify-between items-center mb-4">
                         <div id="currentFolderLabel" class="text-sm text-gray-600">Dossier: <span class="font-medium">Aucun</span></div>
                         <div class="flex items-center space-x-2">
-                            <label id="addFilesLabel" class="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg cursor-pointer hidden">
-                                <i data-feather="plus"></i><span id="addFilesText">Ajouter</span>
-                                <input id="fileInput" type="file" class="hidden"/>
-                            </label>
-                            <button id="toggleSelectBtn" class="px-3 py-2 bg-gray-100 rounded-lg" title="Sélection">
-                                <i data-feather="layers"></i>
-                            </button>
-                        </div>
+    <label id="addFilesLabel" class="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg cursor-pointer hidden">
+        <i data-feather="plus"></i><span id="addFilesText">Ajouter</span>
+        <input id="fileInput" type="file" class="hidden"/>
+    </label>
+    <!-- Ajouter cette ligne pour le bouton nouvelle note -->
+    <button id="addNoteBtn" class="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg cursor-pointer hidden">
+        <i data-feather="file-text"></i><span>Nouvelle note</span>
+    </button>
+    <button id="toggleSelectBtn" class="px-3 py-2 bg-gray-100 rounded-lg" title="Sélection">
+        <i data-feather="layers"></i>
+    </button>
+</div>
                     </div>
 
                     <!-- Content area -->
@@ -306,6 +310,7 @@
         const closeEditModal = document.getElementById('closeEditModal');
         const cancelEditSubject = document.getElementById('cancelEditSubject');
         const confirmEditSubject = document.getElementById('confirmEditSubject');
+      const addNoteBtn = document.getElementById('addNoteBtn');
 
         // State for current subject view
         let currentSubjectId = null;
@@ -492,34 +497,41 @@
         });
 
         // set tab
-        function setTab(tab) {
-            currentTab = tab;
-            tabButtons.forEach(btn => {
-                if (btn.dataset.tab === tab) btn.classList.add('active'); else btn.classList.remove('active');
-            });
-            // adapt addFiles label accept types
-            addFilesLabel.classList.remove('hidden');
-            if (tab === 'photos') {
-                fileInput.accept = 'image/*';
-                addFilesText.textContent = 'Ajouter des photos';
-                fileInput.multiple = true;
-            } else if (tab === 'videos') {
-                fileInput.accept = 'video/*';
-                addFilesText.textContent = 'Ajouter des vidéos';
-                fileInput.multiple = true;
-            } else if (tab === 'documents') {
-                fileInput.accept = '.pdf,.doc,.docx,.txt,application/pdf,application/msword';
-                addFilesText.textContent = 'Ajouter des documents';
-                fileInput.multiple = true;
-            } else if (tab === 'notes') {
-                fileInput.accept = '';
-                addFilesLabel.classList.add('hidden'); // notes have separate "new note" action
-            }
-            // show/hide addFilesLabel
-            if (tab === 'notes') addFilesLabel.classList.add('hidden'); else addFilesLabel.classList.remove('hidden');
-            // update folder label
-            updateCurrentFolderLabel();
-        }
+       function setTab(tab) {
+    currentTab = tab;
+    tabButtons.forEach(btn => {
+        if (btn.dataset.tab === tab) btn.classList.add('active'); else btn.classList.remove('active');
+    });
+    
+    // show/hide add note button
+    if (tab === 'notes') {
+        addNoteBtn.classList.remove('hidden');
+    } else {
+        addNoteBtn.classList.add('hidden');
+    }
+    
+    // adapt addFiles label accept types
+    addFilesLabel.classList.remove('hidden');
+    if (tab === 'photos') {
+        fileInput.accept = 'image/*';
+        addFilesText.textContent = 'Ajouter des photos';
+        fileInput.multiple = true;
+    } else if (tab === 'videos') {
+        fileInput.accept = 'video/*';
+        addFilesText.textContent = 'Ajouter des vidéos';
+        fileInput.multiple = true;
+    } else if (tab === 'documents') {
+        fileInput.accept = '.pdf,.doc,.docx,.txt,application/pdf,application/msword';
+        addFilesText.textContent = 'Ajouter des documents';
+        fileInput.multiple = true;
+    } else if (tab === 'notes') {
+        fileInput.accept = '';
+        addFilesLabel.classList.add('hidden'); // notes have separate "new note" action
+    }
+    
+    // update folder label
+    updateCurrentFolderLabel();
+}
 
         // tab click handlers
         tabButtons.forEach(btn => btn.addEventListener('click', () => {
@@ -682,10 +694,11 @@ function listItemsFor(type) {
             videos.forEach(it => createCard(it, videosContainer));
 
             // Notes
-            const notesContainer = document.getElementById('notes');
-            addFolderCards(notesContainer);
-            const notes = (function(){ let items = []; if (currentFolderId){ const f = data.folders.find(ff=>ff.id===currentFolderId); if(f) items=f.items; } else items=data.itemsOutsideFolders || []; return items.filter(it=>it.type==='note'); })();
-            notes.forEach(it => createCard(it, notesContainer));
+           // Notes
+const notesContainer = document.getElementById('notes');
+addFolderCards(notesContainer);
+const notes = listItemsFor('note');
+notes.forEach(it => createCard(it, notesContainer));
         }
 
         // Open item in viewer/editor
@@ -825,7 +838,8 @@ function listItemsFor(type) {
                 if (currentTab === 'photos') item.type = 'photo';
                 else if (currentTab === 'videos') item.type = 'video';
                 else if (currentTab === 'documents') item.type = 'document';
-                else if (currentTab === 'notes') item.type = 'note';
+                else if (currentTab === 'notes') item.type = 'note'; // Cette ligne est importante !
+
                 
                 if (currentFolderId) {
                     const folder = data.folders.find(ff => ff.id === currentFolderId);
@@ -1012,8 +1026,10 @@ function listItemsFor(type) {
         setTab('documents');
 
         // Small hint: double-click note area to create new note
-        const notesDiv = document.getElementById('notes');
-        notesDiv.addEventListener('dblclick', () => openNoteEditor(null));
+      // Add new note button
+addNoteBtn.addEventListener('click', () => {
+    openNoteEditor(null); // null = nouvelle note
+});
 
         // End of scriptE
     </script>
