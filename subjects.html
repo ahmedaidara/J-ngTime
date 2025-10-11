@@ -552,23 +552,25 @@ const deleteNoteBtn = document.getElementById('deleteNoteBtn');
     }
     
     // adapt addFiles label accept types
-    addFilesLabel.classList.remove('hidden');
-    if (tab === 'photos') {
-        fileInput.accept = 'image/*';
-        addFilesText.textContent = 'Ajouter des photos';
-        fileInput.multiple = true;
-    } else if (tab === 'videos') {
-        fileInput.accept = 'video/*';
-        addFilesText.textContent = 'Ajouter des vidéos';
-        fileInput.multiple = true;
-    } else if (tab === 'documents') {
-        fileInput.accept = '.pdf,.doc,.docx,.txt,application/pdf,application/msword';
-        addFilesText.textContent = 'Ajouter des documents';
-        fileInput.multiple = true;
-    } else if (tab === 'notes') {
-        fileInput.accept = '';
-        addFilesLabel.classList.add('hidden'); // notes have separate "new note" action
-    }
+// adapt addFiles label accept types
+addFilesLabel.classList.remove('hidden');
+if (tab === 'photos') {
+    fileInput.accept = 'image/*';
+    addFilesText.textContent = 'Ajouter des photos';
+    fileInput.multiple = true; // ← Assure-toi que c'est là
+} else if (tab === 'videos') {
+    fileInput.accept = 'video/*';
+    addFilesText.textContent = 'Ajouter des vidéos';
+    fileInput.multiple = true; // ← Assure-toi que c'est là
+} else if (tab === 'documents') {
+    fileInput.accept = '.pdf,.doc,.docx,.txt,application/pdf,application/msword';
+    addFilesText.textContent = 'Ajouter des documents';
+    fileInput.multiple = true; // ← Assure-toi que c'est là
+} else if (tab === 'notes') {
+    fileInput.accept = '';
+    addFilesLabel.classList.add('hidden');
+    fileInput.multiple = false; // ← Pour les notes, single seulement
+}
     
     // update folder label
     updateCurrentFolderLabel();
@@ -592,156 +594,165 @@ const deleteNoteBtn = document.getElementById('deleteNoteBtn');
         }
 
         // Render current tab content
-        function renderCurrentTab() {
-            const data = getSubjectData(currentSubjectId);
-            // clear all
-            document.getElementById('documents').innerHTML = '';
-            document.getElementById('photos').innerHTML = '';
-            document.getElementById('videos').innerHTML = '';
-            document.getElementById('notes').innerHTML = '';
-
-            // Helper: create item card
-           // Remplacer la fonction createCard complètement :
-const createCard = (item, container) => {
-    const card = document.createElement('div');
-    card.className = 'relative bg-white border p-2 rounded shadow-sm cursor-pointer';
+  function renderCurrentTab() {
+    const data = getSubjectData(currentSubjectId);
     
-    // selection checkbox overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'select-overlay';
-    overlay.innerHTML = `<input type="checkbox" class="select-checkbox" data-id="${item.id}" ${selectedItems.has(item.id)?'checked':''} />`;
-    overlay.style.position = 'absolute';
-    overlay.style.top = '8px';
-    overlay.style.right = '8px';
-    if (!selectionMode) overlay.style.display = 'none';
-    card.appendChild(overlay);
+    // Clear all containers
+    document.getElementById('documents').innerHTML = '';
+    document.getElementById('photos').innerHTML = '';
+    document.getElementById('videos').innerHTML = '';
+    document.getElementById('notes').innerHTML = '';
 
-    if (item.type === 'photo') {
-        card.innerHTML += `<img src="${item.dataURL}" class="thumb" data-id="${item.id}" />`;
-    } else if (item.type === 'video') {
-        card.innerHTML += `<div class="h-36 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
-            <video src="${item.dataURL}" class="w-full h-full object-cover" muted></video>
-        </div>`;
-    } else if (item.type === 'document') {
-        card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700">
-            <i data-feather="file" class="w-8 h-8 text-gray-400 mr-2"></i>
-            ${item.name}
-        </div>`;
-    } else if (item.type === 'note') {
-        card.innerHTML += `<div class="h-36 p-3 overflow-hidden text-sm bg-yellow-50 rounded">${item.content ? item.content.substring(0,200) + '...' : 'Nouvelle note'}</div>`;
-    }
+    // Helper: create item card (version corrigée)
+    const createCard = (item, container) => {
+        const card = document.createElement('div');
+        card.className = 'relative bg-white border p-2 rounded shadow-sm cursor-pointer';
+        
+        // selection checkbox overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'select-overlay';
+        overlay.innerHTML = `<input type="checkbox" class="select-checkbox" data-id="${item.id}" ${selectedItems.has(item.id)?'checked':''} />`;
+        overlay.style.position = 'absolute';
+        overlay.style.top = '8px';
+        overlay.style.right = '8px';
+        if (!selectionMode) overlay.style.display = 'none';
+        card.appendChild(overlay);
 
-    // Événement pour ouvrir l'élément au clic sur toute la carte
-    card.addEventListener('click', (e) => {
-        // Empêcher l'ouverture si on clique sur la checkbox de sélection
-        if (e.target.closest('.select-overlay')) return;
-        openItem(item.id);
-    });
+        if (item.type === 'photo') {
+            card.innerHTML += `<img src="${item.dataURL}" class="thumb" data-id="${item.id}" />`;
+        } else if (item.type === 'video') {
+            card.innerHTML += `<div class="h-36 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                <video src="${item.dataURL}" class="w-full h-full object-cover" muted></video>
+            </div>`;
+        } else if (item.type === 'document') {
+            card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700">
+                <i data-feather="file" class="w-8 h-8 text-gray-400 mr-2"></i>
+                ${item.name}
+            </div>`;
+        } else if (item.type === 'note') {
+            card.innerHTML += `<div class="h-36 p-3 overflow-hidden text-sm bg-yellow-50 rounded">${item.content ? item.content.substring(0,200) + '...' : 'Nouvelle note'}</div>`;
+        }
 
-    // Événement pour la checkbox de sélection
-    overlay.querySelector('.select-checkbox').addEventListener('change', (e) => {
-        e.stopPropagation(); // Empêcher l'ouverture de l'élément
-        if (e.target.checked) selectedItems.add(item.id); 
-        else selectedItems.delete(item.id);
-    });
+        // Événement pour ouvrir l'élément au clic sur toute la carte
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.select-overlay')) return;
+            openItem(item.id);
+        });
 
-    container.appendChild(card);
-    feather.replace();
-};
+        // Événement pour la checkbox de sélection
+        const checkbox = overlay.querySelector('.select-checkbox');
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            if (e.target.checked) selectedItems.add(item.id); 
+            else selectedItems.delete(item.id);
+        });
 
-            // render folders list first (as cards) for all tabs
-            const addFolderCards = (container) => {
-                data.folders.forEach(folder => {
-                    const fcard = document.createElement('div');
-                    fcard.className = 'bg-white border p-4 rounded shadow-sm cursor-pointer';
-                   fcard.innerHTML = `<div class="flex items-center justify-between">
-    <div><i data-feather="folder" class="mr-2"></i><span class="font-medium">${folder.name}</span></div>
-    <div class="flex items-center space-x-1">
-        <button class="rename-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="edit-2" class="w-4 h-4"></i></button>
-        <button class="delete-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>
-    </div>
-</div>`;
+        container.appendChild(card);
+        feather.replace();
+    };
 
-// Et ajouter cet event listener pour ouvrir le dossier au clic :
-fcard.addEventListener('click', (e) => {
-    if (e.target.closest('.rename-folder') || e.target.closest('.delete-folder')) return;
-    currentFolderId = folder.id;
-    updateCurrentFolderLabel();
-    renderCurrentTab();
-});
-                    container.appendChild(fcard);
-                    // events
-                    fcard.querySelector('.open-folder').addEventListener('click', () => {
-                        currentFolderId = folder.id;
-                        updateCurrentFolderLabel();
-                        renderCurrentTab();
-                    });
-                    fcard.querySelector('.rename-folder').addEventListener('click', () => {
-                        const newName = prompt('Renommer dossier', folder.name);
-                        if (newName) { folder.name = newName; saveSubjectData(currentSubjectId, data); renderCurrentTab(); }
-                    });
-                    fcard.querySelector('.delete-folder').addEventListener('click', () => {
-                        if (confirm('Supprimer le dossier et tout son contenu ?')) {
-                            data.folders = data.folders.filter(ff => ff.id !== folder.id);
-                            saveSubjectData(currentSubjectId, data);
-                            currentFolderId = null;
-                            updateCurrentFolderLabel();
-                            renderCurrentTab();
-                        }
-                    });
-                });
-            };
+    // Fonction pour ajouter les dossiers UNIQUEMENT dans le conteneur actuel
+    const addFolderCards = (container) => {
+        data.folders.forEach(folder => {
+            const fcard = document.createElement('div');
+            fcard.className = 'bg-white border p-4 rounded shadow-sm cursor-pointer mb-3';
+            fcard.innerHTML = `<div class="flex items-center justify-between">
+                <div><i data-feather="folder" class="mr-2"></i><span class="font-medium">${folder.name}</span></div>
+                <div class="flex items-center space-x-1">
+                    <button class="rename-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="edit-2" class="w-4 h-4"></i></button>
+                    <button class="delete-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            </div>`;
 
-            // pick source items: if in folder -> folder.items else itemsOutsideFolders
-           // Par cette version :
-function listItemsFor(type) {
+            fcard.addEventListener('click', (e) => {
+                if (e.target.closest('.rename-folder') || e.target.closest('.delete-folder')) return;
+                currentFolderId = folder.id;
+                updateCurrentFolderLabel();
+                renderCurrentTab();
+            });
+            
+            // events pour les boutons
+            fcard.querySelector('.rename-folder').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newName = prompt('Renommer dossier', folder.name);
+                if (newName) { 
+                    folder.name = newName; 
+                    saveSubjectData(currentSubjectId, data); 
+                    renderCurrentTab(); 
+                }
+            });
+            
+            fcard.querySelector('.delete-folder').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Supprimer le dossier et tout son contenu ?')) {
+                    data.folders = data.folders.filter(ff => ff.id !== folder.id);
+                    saveSubjectData(currentSubjectId, data);
+                    currentFolderId = null;
+                    updateCurrentFolderLabel();
+                    renderCurrentTab();
+                }
+            });
+
+            container.appendChild(fcard);
+        });
+    };
+
+    // Fonction pour récupérer les items CORRECTEMENT filtrés
+   // Fonction pour récupérer les items CORRECTEMENT filtrés
+function getFilteredItems() {
+    const data = getSubjectData(currentSubjectId); // IMPORTANT: recharger les données
     let items = [];
+    
     if (currentFolderId) {
         const f = data.folders.find(ff => ff.id === currentFolderId);
         if (f) items = f.items || [];
     } else {
         items = data.itemsOutsideFolders || [];
     }
-    // Filtrer par type ET par onglet actuel
+    
+    // Filtrer STRICTEMENT par onglet actuel
     return items.filter(it => {
-        // Pour l'onglet documents : seulement les documents
         if (currentTab === 'documents') return it.type === 'document';
-        // Pour l'onglet photos : seulement les photos
         if (currentTab === 'photos') return it.type === 'photo';
-        // Pour l'onglet videos : seulement les vidéos
         if (currentTab === 'videos') return it.type === 'video';
-        // Pour l'onglet notes : seulement les notes
         if (currentTab === 'notes') return it.type === 'note';
         return false;
     });
 }
 
-            // Documents tab
-            const docsContainer = document.getElementById('documents');
-            addFolderCards(docsContainer);
-            const docs = listItemsFor('document');
-            docs.forEach(it => createCard(it, docsContainer));
+    // Rendu spécifique à chaque onglet
+    const currentContainer = document.getElementById(currentTab);
+    const filteredItems = getFilteredItems();
 
-            // Photos
-            const photosContainer = document.getElementById('photos');
-            addFolderCards(photosContainer);
-            const photos = listItemsFor('photo');
-            photos.forEach(it => createCard(it, photosContainer));
+    // Ajouter les dossiers seulement dans l'onglet actuel
+    addFolderCards(currentContainer);
+    
+    // Ajouter les items seulement dans l'onglet actuel
+    filteredItems.forEach(item => createCard(item, currentContainer));
 
-            // Videos
-            const videosContainer = document.getElementById('videos');
-            addFolderCards(videosContainer);
-            const videos = listItemsFor('video');
-            videos.forEach(it => createCard(it, videosContainer));
-
-            // Notes
-           // Notes
-const notesContainer = document.getElementById('notes');
-addFolderCards(notesContainer);
-const notes = listItemsFor('note');
-notes.forEach(it => createCard(it, notesContainer));
-        }
-
+    // Breadcrumb
+    showBreadcrumbIfInFolder();
+    
+    feather.replace();
+}
+function showBreadcrumbIfInFolder() {
+    if (currentFolderId) {
+        // Supprimer l'ancien bouton s'il existe
+        const existingBtn = document.getElementById('leaveFolderBtn');
+        if (existingBtn) existingBtn.remove();
+        
+        // Ajouter le nouveau bouton
+        currentFolderLabel.innerHTML += ` <button id="leaveFolderBtn" class="ml-3 px-2 py-1 bg-gray-100 rounded text-sm">Retour</button>`;
+        document.getElementById('leaveFolderBtn').addEventListener('click', () => {
+            currentFolderId = null;
+            updateCurrentFolderLabel();
+            renderCurrentTab();
+        });
+    }
+}
+            // pick source items: if in folder -> folder.items else itemsOutsideFolders
+           // Par cette version :
+ 
         // Open item in viewer/editor
         function openItem(itemId) {
             const data = getSubjectData(currentSubjectId);
@@ -860,41 +871,70 @@ notes.forEach(it => createCard(it, notesContainer));
         }
 
         // Add files through input
-        fileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
-            const data = getSubjectData(currentSubjectId);
-            for (const f of files) {
-                const id = Date.now() + Math.floor(Math.random()*1000);
-                const mime = f.type || '';
-                const reader = new FileReader();
-                const p = new Promise(resolve => {
-                    reader.onload = () => resolve(reader.result);
-                });
+       fileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    const data = getSubjectData(currentSubjectId);
+    let addedCount = 0;
+    
+    for (const f of files) {
+        const id = Date.now() + Math.floor(Math.random() * 1000) + addedCount; // ID unique pour chaque fichier
+        const mime = f.type || '';
+        const reader = new FileReader();
+        
+        try {
+            const dataURL = await new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
                 reader.readAsDataURL(f);
-                const dataURL = await p;
-                let item = { id, type: '', name: f.name, dataURL, mime, createdAt: new Date().toISOString() };
-                
-                // Assign correct type based on current tab
-                if (currentTab === 'photos') item.type = 'photo';
-                else if (currentTab === 'videos') item.type = 'video';
-                else if (currentTab === 'documents') item.type = 'document';
-                else if (currentTab === 'notes') item.type = 'note'; // Cette ligne est importante !
-
-                
-                if (currentFolderId) {
-                    const folder = data.folders.find(ff => ff.id === currentFolderId);
-                    if (!folder) continue;
+            });
+            
+            let item = { 
+                id, 
+                type: '', 
+                name: f.name, 
+                dataURL, 
+                mime, 
+                createdAt: new Date().toISOString() 
+            };
+            
+            // Assign correct type based on current tab
+            if (currentTab === 'photos') item.type = 'photo';
+            else if (currentTab === 'videos') item.type = 'video';
+            else if (currentTab === 'documents') item.type = 'document';
+            else if (currentTab === 'notes') item.type = 'note';
+            
+            // Add to the right location
+            if (currentFolderId) {
+                const folder = data.folders.find(ff => ff.id === currentFolderId);
+                if (folder) {
                     folder.items.push(item);
-                } else {
-                    data.itemsOutsideFolders = data.itemsOutsideFolders || [];
-                    data.itemsOutsideFolders.push(item);
+                    addedCount++;
                 }
+            } else {
+                data.itemsOutsideFolders = data.itemsOutsideFolders || [];
+                data.itemsOutsideFolders.push(item);
+                addedCount++;
             }
-            saveSubjectData(currentSubjectId, data);
-            e.target.value = ''; // Reset input to allow selecting same file again
-            renderCurrentTab();
-        });
+            
+        } catch (error) {
+            console.error('Error reading file:', f.name, error);
+        }
+    }
+    
+    if (addedCount > 0) {
+        saveSubjectData(currentSubjectId, data);
+        renderCurrentTab();
+        // Petit feedback
+        if (addedCount > 1) {
+            alert(`${addedCount} éléments ajoutés avec succès !`);
+        }
+    }
+    
+    // TRÈS IMPORTANT: Reset l'input pour pouvoir réutiliser
+   resetFileInput();
+});
 
         // Notes: create new note button keyboard? We'll open note editor to create.
         // For simplicity, add a "double-click on notes tab area" to create a note
@@ -1020,9 +1060,89 @@ notes.forEach(it => createCard(it, notesContainer));
         });
 
         // Add files label proxy to fileInput
-        addFilesLabel.addEventListener('click', () => fileInput.click());
+      // Crée un nouvel input file dynamiquement à chaque fois
+addFilesLabel.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    // Crée un nouvel input file
+    const newFileInput = document.createElement('input');
+    newFileInput.type = 'file';
+    newFileInput.multiple = true;
+    
+    // Définir les accept selon l'onglet
+    if (currentTab === 'photos') {
+        newFileInput.accept = 'image/*';
+        newFileInput.multiple = true;
+    } else if (currentTab === 'videos') {
+        newFileInput.accept = 'video/*';
+        newFileInput.multiple = true;
+    } else if (currentTab === 'documents') {
+        newFileInput.accept = '.pdf,.doc,.docx,.txt,application/pdf,application/msword';
+        newFileInput.multiple = true;
+    }
+    
+    newFileInput.style.display = 'none';
+    document.body.appendChild(newFileInput);
+    
+    newFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) {
+            document.body.removeChild(newFileInput);
+            return;
+        }
+        
+        const data = getSubjectData(currentSubjectId);
+        let addedCount = 0;
+        
+        for (const f of files) {
+            const id = Date.now() + Math.floor(Math.random() * 1000) + addedCount;
+            const mime = f.type || '';
+            const reader = new FileReader();
+            
+            const dataURL = await new Promise(resolve => {
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(f);
+            });
+            
+            let item = { id, type: '', name: f.name, dataURL, mime, createdAt: new Date().toISOString() };
+            
+            if (currentTab === 'photos') item.type = 'photo';
+            else if (currentTab === 'videos') item.type = 'video';
+            else if (currentTab === 'documents') item.type = 'document';
+            else if (currentTab === 'notes') item.type = 'note';
+            
+            if (currentFolderId) {
+                const folder = data.folders.find(ff => ff.id === currentFolderId);
+                if (folder) {
+                    folder.items.push(item);
+                    addedCount++;
+                }
+            } else {
+                data.itemsOutsideFolders = data.itemsOutsideFolders || [];
+                data.itemsOutsideFolders.push(item);
+                addedCount++;
+            }
+        }
+        
+        if (addedCount > 0) {
+            saveSubjectData(currentSubjectId, data);
+            renderCurrentTab();
+        }
+        
+        // Nettoie l'input
+        document.body.removeChild(newFileInput);
+    });
+    
+    // Déclenche le click
+    newFileInput.click();
+});
 
         // When creating items outside folder vs inside folder: let user choose currentFolderId by clicking folder first.
+      // Fonction pour reset complètement l'input file
+function resetFileInput() {
+    fileInput.value = '';
+    fileInput.type = 'file'; // Force reset
+}
         // 'Retour dossier' functionality: if in folder we show a small breadcrumb to leave folder
         function showBreadcrumbIfInFolder() {
             if (currentFolderId) {
@@ -1034,6 +1154,159 @@ notes.forEach(it => createCard(it, notesContainer));
                 });
             }
         }
+      
+      /*******************************
+ * AJOUT à coller AVANT renderSubjects();
+ *******************************/
+
+// guard pour éviter double exécution du handler
+let isProcessingFiles = false;
+
+/** clé unique pour un item : type + nom + taille (si dispo) */
+function itemKey(it) {
+    return `${it.type || ''}::${it.name || ''}::${it.size || (it.dataURL?it.dataURL.length:0)}`;
+}
+
+/** Déduplication complète du subject_data_{id} */
+function dedupeSubjectData(subjectId) {
+    const data = getSubjectData(subjectId);
+    const seen = new Set();
+
+    // helper pour filtrer une liste
+    function filterList(list) {
+        const out = [];
+        for (const it of (list || [])) {
+            const k = itemKey(it);
+            if (!seen.has(k)) {
+                seen.add(k);
+                out.push(it);
+            }
+            // si déjà vu -> ignoré
+        }
+        return out;
+    }
+
+    // dédupliquer itemsOutsideFolders
+    data.itemsOutsideFolders = filterList(data.itemsOutsideFolders || []);
+
+    // dédupliquer items inside each folder (et aussi s'assurer qu'un même item n'existe pas déjà outside)
+    for (const ff of (data.folders || [])) {
+        ff.items = filterList(ff.items || []);
+    }
+
+    saveSubjectData(subjectId, data);
+    return data;
+}
+
+/** Remplacement sûr du handler fileInput.change
+ *  - évite la ré-entrée via isProcessingFiles
+ *  - refuse explicitement un fichier déjà présent (même across folders)
+ *  - ajoute size dans l'item pour pouvoir comparer
+ */
+fileInput.removeEventListener && fileInput.removeEventListener('change', null); // safe attempt
+fileInput.addEventListener('change', async (e) => {
+    if (!currentSubjectId) { alert('Sélectionne d\'abord une matière'); e.target.value = ''; return; }
+    if (isProcessingFiles) return; // verrou
+    isProcessingFiles = true;
+
+    try {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        const data = getSubjectData(currentSubjectId);
+
+        // Construire liste plate de tous les items existants (folders + outside)
+        const existing = [];
+        (data.itemsOutsideFolders || []).forEach(it => existing.push(it));
+        (data.folders || []).forEach(ff => (ff.items || []).forEach(it => existing.push(it)));
+        const existingKeys = new Set(existing.map(it => itemKey(it)));
+
+        for (const f of files) {
+            // créer clé candidat rapidement
+            // utiliser size si disponible, sinon on lira dataURL length après FileReader
+            const candidateKeyPartial = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size || 0}`;
+            // si déjà existant (nom+taille) on skippe tout de suite
+            if (existingKeys.has(candidateKeyPartial)) {
+                // note: parfois size=0 (chromebook/etc.) -> on continue et vérifie après lecture
+                continue;
+            }
+
+            const id = Date.now() + Math.floor(Math.random() * 1000);
+            const reader = new FileReader();
+            const dataURL = await new Promise(resolve => {
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(f);
+            });
+
+            // construire item
+            const item = {
+                id,
+                type: currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note',
+                name: f.name,
+                size: f.size || (dataURL ? dataURL.length : 0),
+                dataURL,
+                mime: f.type || '',
+                createdAt: new Date().toISOString()
+            };
+
+            const fullKey = itemKey(item);
+            // re-vérifier après lecture (dans le rare cas size=0 ou race)
+            if (existingKeys.has(fullKey)) continue;
+
+            // ajout
+            if (currentFolderId) {
+                const folder = data.folders.find(ff => ff.id === currentFolderId);
+                if (!folder) {
+                    // si dossier supprimé entre temps, ajouter outside
+                    data.itemsOutsideFolders = data.itemsOutsideFolders || [];
+                    data.itemsOutsideFolders.push(item);
+                } else {
+                    folder.items = folder.items || [];
+                    folder.items.push(item);
+                }
+            } else {
+                data.itemsOutsideFolders = data.itemsOutsideFolders || [];
+                data.itemsOutsideFolders.push(item);
+            }
+
+            // marquer comme existant pour ce batch (évite duplicates si user sélectionne 2x le même fichier)
+            existingKeys.add(fullKey);
+        }
+
+        // Deduplicate croisé (sécurise déjà stocké)
+        dedupeSubjectData(currentSubjectId);
+
+        // sauvegarde + reset input + render
+        saveSubjectData(currentSubjectId, getSubjectData(currentSubjectId));
+        e.target.value = ''; // permet de re-sélectionner les mêmes fichiers plus tard
+        renderCurrentTab();
+    } finally {
+        isProcessingFiles = false;
+    }
+});
+
+/** FORCE clearing des conteneurs au début de renderCurrentTab (dans le cas oùl'ancienne fonction
+ *  était redéfinie plusieurs fois). On redéfinit proprement renderCurrentTab ici en le wrapant.
+ */
+(function wrapRender() {
+    const original = renderCurrentTab;
+    renderCurrentTab = function() {
+        // vider conteneurs AVANT tout rendu (assure qu'on ne double pas l'affichage)
+        const ids = ['documents','photos','videos','notes'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        });
+        // appeler l'original
+        try { original(); }
+        catch (err) {
+            // si original n'existe plus (rare), on ignore proprement
+            console.warn('renderCurrentTab original failed', err);
+        }
+        // show breadcrumb if needed (ton code existant)
+        try { showBreadcrumbIfInFolder(); } catch(e){ /* ignore */ }
+    };
+})();
+
 
         // Render initial
         renderSubjects();
