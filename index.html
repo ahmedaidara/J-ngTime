@@ -830,42 +830,67 @@ setInterval(updateCurrentTime, 1000);
 updateCurrentTime();
 
 // Load next exam from schedule
+// Load next exam from schedule - VERSION AVEC 3 EXAMENS ET 15 MIN
 function loadNextExam() {
     const exams = JSON.parse(localStorage.getItem('exams')) || [];
     const now = new Date();
     
-    // Examen en cours (+1h)
+    // Examen en cours (+15min)
     const ongoingExam = exams.find(exam => {
         const examStart = new Date(`${exam.date}T${exam.time}`);
-        const examEnd = new Date(examStart.getTime() + 60 * 60 * 1000);
+        const examEnd = new Date(examStart.getTime() + 15 * 60 * 1000); // 15 minutes
         return now >= examStart && now <= examEnd;
     });
     
     const nextExamElement = document.getElementById('next-exam');
     
     if (ongoingExam) {
-        nextExamElement.textContent = `${ongoingExam.name} - En cours`;
+        nextExamElement.innerHTML = `
+            <div class="text-center">
+                <div class="font-bold text-red-600">${ongoingExam.name} - En cours</div>
+                <div class="text-sm text-gray-500">Termine dans 15 minutes</div>
+            </div>
+        `;
         return;
     }
     
-    // Examen futur le plus proche
+    // Examens futurs les plus proches (3 maximum)
     const futureExams = exams
         .filter(exam => new Date(`${exam.date}T${exam.time}`) > now)
-        .sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+        .sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`))
+        .slice(0, 3);
 
     if (futureExams.length > 0) {
-        const nextExam = futureExams[0];
-        const examDate = new Date(`${nextExam.date}T${nextExam.time}`);
-        const diff = examDate - now;
+        let examsHTML = '';
+        
+        futureExams.forEach((exam, index) => {
+            const examDate = new Date(`${exam.date}T${exam.time}`);
+            const diff = examDate - now;
 
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
 
-        nextExamElement.innerHTML = `${nextExam.name} dans <span id="countdown-home">${days}J-${hours}H-${mins}MN-${secs}S</span>`;
+            examsHTML += `
+                <div class="${index > 0 ? 'mt-3 pt-3 border-t border-gray-200' : ''} flex justify-between items-center">
+                    <span class="font-medium">${exam.name}</span>
+                  <span class="text-purple-600 font-semibold text-sm">
+    &nbsp;dans ${days}J ${hours}H ${mins}MN ${secs}S
+</span>
+                </div>
+            `;
+        });
+
+        nextExamElement.innerHTML = examsHTML;
     } else {
-        nextExamElement.textContent = "Aucun examen prévu";
+        nextExamElement.innerHTML = `
+            <div class="text-center text-gray-500">
+                <i data-feather="calendar" class="w-6 h-6 mx-auto mb-2"></i>
+                <div>Aucun examen prévu</div>
+            </div>
+        `;
+        feather.replace();
     }
 }
 
