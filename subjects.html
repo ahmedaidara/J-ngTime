@@ -33,6 +33,24 @@
             z-index: 100;
         }
         .close-btn:hover { background: rgba(0,0,0,0.9); }
+      /* Style pour l'éditeur de note */
+#noteEditor {
+    min-height: 200px;
+    line-height: 1.6;
+}
+
+#noteEditor:focus {
+    outline: none;
+    background-color: #fafafa;
+}
+
+/* Assurer le défilement sur mobile */
+@media (max-width: 640px) {
+    #noteEditorModal > div {
+        margin: 10px;
+        height: 95vh;
+    }
+}
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
@@ -150,7 +168,7 @@
                 <div class="mt-4">
                     <!-- Upload + buttons -->
                     <div class="flex justify-between items-center mb-4">
-                        <div id="currentFolderLabel" class="text-sm text-gray-600">Dossier: <span class="font-medium">Aucun</span></div>
+                        <div id="currentFolderLabel" class="text-sm text-gray-600"> <span class="font-medium"></span></div>
                         <div class="flex items-center space-x-2">
     <label id="addFilesLabel" class="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg cursor-pointer hidden">
         <i data-feather="plus"></i><span id="addFilesText">Ajouter</span>
@@ -199,28 +217,49 @@
     </div>
 
     <!-- Note editor modal -->
-    <div id="noteEditorModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">Éditeur de note</h3>
-                <div class="flex items-center space-x-2">
-                    <input id="noteColor" type="color" class="w-10 h-8 p-0 border-0"/>
-                    <select id="noteFontSize" class="px-2 py-1 border rounded">
-                        <option value="16">16px</option>
-                        <option value="18">18px</option>
-                        <option value="20" selected>20px</option>
-                        <option value="22">22px</option>
-                        <option value="24">24px</option>
-                    </select>
-                    <button id="noteBold" class="px-3 py-1 border rounded">B</button>
-                    <button id="noteItalic" class="px-3 py-1 border rounded">I</button>
-                    <button id="noteUnderline" class="px-3 py-1 border rounded">U</button>
-                    <button id="saveNoteBtn" class="px-4 py-2 bg-purple-600 text-white rounded">Sauvegarder</button>
-                </div>
-            </div>
-            <div id="noteEditor" contenteditable="true" class="w-full min-h-[40vh] border p-4 rounded"></div>
+  <!-- Note editor modal -->
+<div id="noteEditorModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl h-[90vh] flex flex-col">
+        <!-- Header avec icône fermer -->
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 class="text-lg font-semibold">Éditeur de note</h3>
+            <button id="closeNoteEditor" class="p-2 rounded-full hover:bg-gray-100">
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <!-- Barre d'outils -->
+        <div class="flex items-center space-x-2 p-4 border-b">
+            <input id="noteColor" type="color" class="w-10 h-8 p-0 border-0 cursor-pointer"/>
+            <select id="noteFontSize" class="px-2 py-1 border rounded text-sm">
+                <option value="14">14px</option>
+                <option value="16">16px</option>
+                <option value="18" selected>18px</option>
+                <option value="20">20px</option>
+                <option value="22">22px</option>
+                <option value="24">24px</option>
+            </select>
+            <button id="noteBold" class="px-3 py-1 border rounded text-sm font-bold" title="Gras">B</button>
+            <button id="noteItalic" class="px-3 py-1 border rounded text-sm italic" title="Italique">I</button>
+            <button id="noteUnderline" class="px-3 py-1 border rounded text-sm underline" title="Souligné">U</button>
+        </div>
+        
+        <!-- Éditeur avec défilement -->
+        <div id="noteEditor" contenteditable="true" class="flex-1 p-4 overflow-y-auto min-h-0"></div>
+        
+        <!-- Footer avec boutons -->
+        <div class="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-xl">
+            <button id="deleteNoteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center space-x-2">
+                <i data-feather="trash-2" class="w-4 h-4"></i>
+                <span>Supprimer</span>
+            </button>
+            <button id="saveNoteBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center space-x-2">
+                <i data-feather="save" class="w-4 h-4"></i>
+                <span>Sauvegarder</span>
+            </button>
         </div>
     </div>
+</div>
 
     <!-- Templates and hidden inputs -->
     <input id="multiFileInput" type="file" multiple class="hidden"/>
@@ -311,6 +350,8 @@
         const cancelEditSubject = document.getElementById('cancelEditSubject');
         const confirmEditSubject = document.getElementById('confirmEditSubject');
       const addNoteBtn = document.getElementById('addNoteBtn');
+      const closeNoteEditor = document.getElementById('closeNoteEditor');
+const deleteNoteBtn = document.getElementById('deleteNoteBtn');
 
         // State for current subject view
         let currentSubjectId = null;
@@ -543,7 +584,7 @@
         function updateCurrentFolderLabel() {
             const data = getSubjectData(currentSubjectId);
             if (!currentFolderId) {
-                currentFolderLabel.innerHTML = 'Dossier: <span class="font-medium">Aucun</span>';
+                currentFolderLabel.innerHTML = ' <span class="font-medium"> </span>';
             } else {
                 const f = data.folders.find(ff => ff.id === currentFolderId);
                 currentFolderLabel.innerHTML = 'Dossier: <span class="font-medium">' + (f ? f.name : '—') + '</span>';
@@ -862,21 +903,30 @@ notes.forEach(it => createCard(it, notesContainer));
         });
 
         // Note editor open
-        function openNoteEditor(item) {
-            noteEditorModal.classList.remove('hidden');
-            if (item) {
-                noteEditor.innerHTML = item.content || '';
-                noteEditor.dataset.editingId = item.id;
-                noteFontSize.value = item.fontSize || 20;
-                noteColor.value = item.color || '#000000';
-            } else {
-                noteEditor.innerHTML = '';
-                delete noteEditor.dataset.editingId;
-                noteFontSize.value = 20;
-                noteColor.value = '#000000';
-            }
-            applyNoteStyle();
-        }
+       function openNoteEditor(item) {
+    noteEditorModal.classList.remove('hidden');
+    if (item) {
+        noteEditor.innerHTML = item.content || '';
+        noteEditor.dataset.editingId = item.id;
+        noteFontSize.value = item.fontSize || 18;
+        noteColor.value = item.color || '#000000';
+        // Afficher le bouton supprimer seulement pour les notes existantes
+        deleteNoteBtn.classList.remove('hidden');
+    } else {
+        noteEditor.innerHTML = '';
+        delete noteEditor.dataset.editingId;
+        noteFontSize.value = 18;
+        noteColor.value = '#000000';
+        // Cacher le bouton supprimer pour les nouvelles notes
+        deleteNoteBtn.classList.add('hidden');
+    }
+    applyNoteStyle();
+    
+    // Focus sur l'éditeur
+    setTimeout(() => {
+        noteEditor.focus();
+    }, 100);
+}
 
         // apply style when color or font size changes
         function applyNoteStyle() {
@@ -1030,7 +1080,39 @@ notes.forEach(it => createCard(it, notesContainer));
 addNoteBtn.addEventListener('click', () => {
     openNoteEditor(null); // null = nouvelle note
 });
+// Close note editor
+closeNoteEditor.addEventListener('click', () => {
+    noteEditorModal.classList.add('hidden');
+});
 
+// Delete note
+deleteNoteBtn.addEventListener('click', () => {
+    const editingId = noteEditor.dataset.editingId;
+    if (!editingId) {
+        // Si c'est une nouvelle note, juste fermer
+        noteEditorModal.classList.add('hidden');
+        return;
+    }
+    
+    if (confirm('Supprimer cette note définitivement ?')) {
+        const data = getSubjectData(currentSubjectId);
+        const id = Number(editingId);
+        
+        // Supprimer de l'emplacement actuel
+        if (currentFolderId) {
+            const f = data.folders.find(ff => ff.id === currentFolderId);
+            if (f) {
+                f.items = f.items.filter(it => it.id !== id);
+            }
+        } else {
+            data.itemsOutsideFolders = (data.itemsOutsideFolders || []).filter(it => it.id !== id);
+        }
+        
+        saveSubjectData(currentSubjectId, data);
+        noteEditorModal.classList.add('hidden');
+        renderCurrentTab();
+    }
+});
         // End of scriptE
     </script>
 </body>
