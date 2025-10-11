@@ -548,66 +548,74 @@
             document.getElementById('notes').innerHTML = '';
 
             // Helper: create item card
-            const createCard = (item, container) => {
-                const card = document.createElement('div');
-                card.className = 'relative bg-white border p-2 rounded shadow-sm';
-                // selection checkbox overlay
-                const overlay = document.createElement('div');
-                overlay.className = 'select-overlay';
-                overlay.innerHTML = `<input type="checkbox" class="select-checkbox" data-id="${item.id}" ${selectedItems.has(item.id)?'checked':''} />`;
-                overlay.style.position = 'absolute';
-                overlay.style.top = '8px';
-                overlay.style.right = '8px';
-                if (!selectionMode) overlay.style.display = 'none';
-                card.appendChild(overlay);
+           // Remplacer la fonction createCard complètement :
+const createCard = (item, container) => {
+    const card = document.createElement('div');
+    card.className = 'relative bg-white border p-2 rounded shadow-sm cursor-pointer';
+    
+    // selection checkbox overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'select-overlay';
+    overlay.innerHTML = `<input type="checkbox" class="select-checkbox" data-id="${item.id}" ${selectedItems.has(item.id)?'checked':''} />`;
+    overlay.style.position = 'absolute';
+    overlay.style.top = '8px';
+    overlay.style.right = '8px';
+    if (!selectionMode) overlay.style.display = 'none';
+    card.appendChild(overlay);
 
-                if (item.type === 'photo') {
-                    card.innerHTML += `<img src="${item.dataURL}" class="thumb" data-id="${item.id}" />`;
-                } else if (item.type === 'video') {
-                    // create poster if provided else video tag thumbnail
-                    card.innerHTML += `<div class="h-36 bg-gray-100 rounded overflow-hidden flex items-center justify-center"><video src="${item.dataURL}" class="w-full h-full object-cover" muted></video></div>`;
-                } else if (item.type === 'document') {
-                    card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700">${item.name}</div>`;
-                } else if (item.type === 'note') {
-                    card.innerHTML += `<div class="h-36 p-2 overflow-hidden text-sm">${item.content ? item.content.substring(0,240) : ''}</div>`;
-                }
+    if (item.type === 'photo') {
+        card.innerHTML += `<img src="${item.dataURL}" class="thumb" data-id="${item.id}" />`;
+    } else if (item.type === 'video') {
+        card.innerHTML += `<div class="h-36 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+            <video src="${item.dataURL}" class="w-full h-full object-cover" muted></video>
+        </div>`;
+    } else if (item.type === 'document') {
+        card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700">
+            <i data-feather="file" class="w-8 h-8 text-gray-400 mr-2"></i>
+            ${item.name}
+        </div>`;
+    } else if (item.type === 'note') {
+        card.innerHTML += `<div class="h-36 p-3 overflow-hidden text-sm bg-yellow-50 rounded">${item.content ? item.content.substring(0,200) + '...' : 'Nouvelle note'}</div>`;
+    }
 
-                // footer
-                const footer = document.createElement('div');
-                footer.className = 'mt-2 flex justify-between items-center';
-                footer.innerHTML = `<div class="text-xs text-gray-500">${new Date(item.createdAt).toLocaleString()}</div>
-                                    <div class="flex space-x-2">
-                                        <button class="open-item p-1 rounded hover:bg-gray-100" data-id="${item.id}"><i data-feather="eye" class="w-4 h-4"></i></button>
-                                        <button class="delete-item p-1 rounded hover:bg-gray-100" data-id="${item.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>
-                                    </div>`;
-                card.appendChild(footer);
-                // events
-                card.querySelectorAll('.open-item').forEach(b => b.addEventListener('click', () => openItem(item.id)));
-                card.querySelectorAll('.delete-item').forEach(b => b.addEventListener('click', () => {
-                    if (confirm('Supprimer cet élément ?')) { deleteItem(item.id); }
-                }));
-                // checkbox
-                overlay.querySelector('.select-checkbox').addEventListener('change', (e) => {
-                    if (e.target.checked) selectedItems.add(item.id); else selectedItems.delete(item.id);
-                });
+    // Événement pour ouvrir l'élément au clic sur toute la carte
+    card.addEventListener('click', (e) => {
+        // Empêcher l'ouverture si on clique sur la checkbox de sélection
+        if (e.target.closest('.select-overlay')) return;
+        openItem(item.id);
+    });
 
-                container.appendChild(card);
-                feather.replace();
-            };
+    // Événement pour la checkbox de sélection
+    overlay.querySelector('.select-checkbox').addEventListener('change', (e) => {
+        e.stopPropagation(); // Empêcher l'ouverture de l'élément
+        if (e.target.checked) selectedItems.add(item.id); 
+        else selectedItems.delete(item.id);
+    });
+
+    container.appendChild(card);
+    feather.replace();
+};
 
             // render folders list first (as cards) for all tabs
             const addFolderCards = (container) => {
                 data.folders.forEach(folder => {
                     const fcard = document.createElement('div');
                     fcard.className = 'bg-white border p-4 rounded shadow-sm cursor-pointer';
-                    fcard.innerHTML = `<div class="flex items-center justify-between">
-                        <div><i data-feather="folder" class="mr-2"></i><span class="font-medium">${folder.name}</span></div>
-                        <div class="flex items-center space-x-2">
-                            <button class="open-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="arrow-right"></i></button>
-                            <button class="rename-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="edit-2"></i></button>
-                            <button class="delete-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="trash-2"></i></button>
-                        </div>
-                    </div>`;
+                   fcard.innerHTML = `<div class="flex items-center justify-between">
+    <div><i data-feather="folder" class="mr-2"></i><span class="font-medium">${folder.name}</span></div>
+    <div class="flex items-center space-x-1">
+        <button class="rename-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="edit-2" class="w-4 h-4"></i></button>
+        <button class="delete-folder p-1 rounded hover:bg-gray-100" data-folder="${folder.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>
+    </div>
+</div>`;
+
+// Et ajouter cet event listener pour ouvrir le dossier au clic :
+fcard.addEventListener('click', (e) => {
+    if (e.target.closest('.rename-folder') || e.target.closest('.delete-folder')) return;
+    currentFolderId = folder.id;
+    updateCurrentFolderLabel();
+    renderCurrentTab();
+});
                     container.appendChild(fcard);
                     // events
                     fcard.querySelector('.open-folder').addEventListener('click', () => {
@@ -632,16 +640,28 @@
             };
 
             // pick source items: if in folder -> folder.items else itemsOutsideFolders
-            function listItemsFor(type) {
-                let items = [];
-                if (currentFolderId) {
-                    const f = data.folders.find(ff => ff.id === currentFolderId);
-                    if (f) items = f.items || [];
-                } else {
-                    items = data.itemsOutsideFolders || [];
-                }
-                return items.filter(it => it.type === type);
-            }
+           // Par cette version :
+function listItemsFor(type) {
+    let items = [];
+    if (currentFolderId) {
+        const f = data.folders.find(ff => ff.id === currentFolderId);
+        if (f) items = f.items || [];
+    } else {
+        items = data.itemsOutsideFolders || [];
+    }
+    // Filtrer par type ET par onglet actuel
+    return items.filter(it => {
+        // Pour l'onglet documents : seulement les documents
+        if (currentTab === 'documents') return it.type === 'document';
+        // Pour l'onglet photos : seulement les photos
+        if (currentTab === 'photos') return it.type === 'photo';
+        // Pour l'onglet videos : seulement les vidéos
+        if (currentTab === 'videos') return it.type === 'video';
+        // Pour l'onglet notes : seulement les notes
+        if (currentTab === 'notes') return it.type === 'note';
+        return false;
+    });
+}
 
             // Documents tab
             const docsContainer = document.getElementById('documents');
@@ -995,7 +1015,7 @@
         const notesDiv = document.getElementById('notes');
         notesDiv.addEventListener('dblclick', () => openNoteEditor(null));
 
-        // End of script
+        // End of scriptE
     </script>
 </body>
-</html>
+</html> 
