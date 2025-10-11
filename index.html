@@ -2962,16 +2962,57 @@ function getDynamicGreeting() {
 // Salutations spéciales selon le jour - VERSION CORRIGÉE
 function getDaySpecificGreeting() {
     const now = new Date();
-    const day = now.getDay(); // 0 = dimanche, 1 = lundi...
-    
-    // Uniquement les jours spéciaux, pas tous les jours
-    switch(day) {
-        case 1: return "Bon début de semaine 💪";
-        case 5: return "Bon vendredi 🎉"; 
-        case 6: 
-        case 0: return "Bon weekend 😊";
-        default: return null;
+    const day = now.getDay(); // 0 = dimanche, 1 = lundi, ...
+    const hour = now.getHours();
+    let greeting = "";
+
+    if (hour >= 5 && hour < 12) {
+        // Matin
+        switch(day) {
+            case 1: greeting = "Bon lundi"; break;
+            case 2: greeting = "Bon mardi"; break;
+            case 3: greeting = "Bon mercredi"; break;
+            case 4: greeting = "Bon jeudi"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else if (hour >= 12 && hour < 15) {
+        // Midi
+        switch(day) {
+            case 1: greeting = "Bon repas"; break;
+            case 2: greeting = "Bon appétit"; break;
+            case 3: greeting = "Bon midi"; break;
+            case 4: greeting = "Bon déjeuner"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else if (hour >= 15 && hour < 19) {
+        // Après-midi
+        switch(day) {
+            case 1: greeting = "Bonne journée"; break;
+            case 2: greeting = "Bon mardi"; break;
+            case 3: greeting = "Bonne après-midi"; break;
+            case 4: greeting = "Bon jeudi"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else {
+        // Soir
+        switch(day) {
+            case 1: greeting = "Bonne soirée"; break;
+            case 2: greeting = "Bonne nuit"; break;
+            case 3: greeting = "Bonne soirée"; break;
+            case 4: greeting = "Bonne nuit"; break;
+            case 5: greeting = "Bon weekend"; break;
+            case 6: greeting = "Bonne soirée"; break;
+            case 0: greeting = "Bonne nuit"; break;
+        }
     }
+
+    return greeting;
 }
 
 // Obtenir une citation aléatoire
@@ -3897,16 +3938,59 @@ function getDynamicGreeting() {
 // Salutations spéciales selon le jour
 function getDaySpecificGreeting() {
     const now = new Date();
-    const day = now.getDay(); // 0 = dimanche, 1 = lundi...
-    
-    switch(day) {
-        case 1: return "Bon début de semaine 💪";
-        case 5: return "Bon vendredi 🎉"; 
-        case 6: 
-        case 0: return "Bon weekend 😊";
-        default: return null;
+    const day = now.getDay(); // 0 = dimanche, 1 = lundi, ...
+    const hour = now.getHours();
+    let greeting = "";
+
+    if (hour >= 5 && hour < 12) {
+        // Matin
+        switch(day) {
+            case 1: greeting = "Bon lundi"; break;
+            case 2: greeting = "Bon mardi"; break;
+            case 3: greeting = "Bon mercredi"; break;
+            case 4: greeting = "Bon jeudi"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else if (hour >= 12 && hour < 15) {
+        // Midi
+        switch(day) {
+            case 1: greeting = "Bon repas"; break;
+            case 2: greeting = "Bon appétit"; break;
+            case 3: greeting = "Bon midi"; break;
+            case 4: greeting = "Bon déjeuner"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else if (hour >= 15 && hour < 19) {
+        // Après-midi
+        switch(day) {
+            case 1: greeting = "Bonne journée"; break;
+            case 2: greeting = "Bon mardi"; break;
+            case 3: greeting = "Bonne après-midi"; break;
+            case 4: greeting = "Bon jeudi"; break;
+            case 5: greeting = "Bon vendredi"; break;
+            case 6: greeting = "Bon samedi"; break;
+            case 0: greeting = "Bon dimanche"; break;
+        }
+    } else {
+        // Soir
+        switch(day) {
+            case 1: greeting = "Bonne soirée"; break;
+            case 2: greeting = "Bonne nuit"; break;
+            case 3: greeting = "Bonne soirée"; break;
+            case 4: greeting = "Bonne nuit"; break;
+            case 5: greeting = "Bon weekend"; break;
+            case 6: greeting = "Bonne soirée"; break;
+            case 0: greeting = "Bonne nuit"; break;
+        }
     }
+
+    return greeting;
 }
+
 
 // Obtenir une citation aléatoire
 function getRandomQuote() {
