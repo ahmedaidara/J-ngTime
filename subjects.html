@@ -1204,85 +1204,70 @@ function dedupeSubjectData(subjectId) {
  *  - ajoute size dans l'item pour pouvoir comparer
  */
 fileInput.removeEventListener && fileInput.removeEventListener('change', null); // safe attempt
+/** ✅ Version améliorée : ajout illimité de fichiers sans blocage ni doublons */
 fileInput.addEventListener('change', async (e) => {
-    if (!currentSubjectId) { alert('Sélectionne d\'abord une matière'); e.target.value = ''; return; }
-    if (isProcessingFiles) return; // verrou
-    isProcessingFiles = true;
-
-    try {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
-        const data = getSubjectData(currentSubjectId);
-
-        // Construire liste plate de tous les items existants (folders + outside)
-        const existing = [];
-        (data.itemsOutsideFolders || []).forEach(it => existing.push(it));
-        (data.folders || []).forEach(ff => (ff.items || []).forEach(it => existing.push(it)));
-        const existingKeys = new Set(existing.map(it => itemKey(it)));
-
-        for (const f of files) {
-            // créer clé candidat rapidement
-            // utiliser size si disponible, sinon on lira dataURL length après FileReader
-            const candidateKeyPartial = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size || 0}`;
-            // si déjà existant (nom+taille) on skippe tout de suite
-            if (existingKeys.has(candidateKeyPartial)) {
-                // note: parfois size=0 (chromebook/etc.) -> on continue et vérifie après lecture
-                continue;
-            }
-
-            const id = Date.now() + Math.floor(Math.random() * 1000);
-            const reader = new FileReader();
-            const dataURL = await new Promise(resolve => {
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(f);
-            });
-
-            // construire item
-            const item = {
-                id,
-                type: currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note',
-                name: f.name,
-                size: f.size || (dataURL ? dataURL.length : 0),
-                dataURL,
-                mime: f.type || '',
-                createdAt: new Date().toISOString()
-            };
-
-            const fullKey = itemKey(item);
-            // re-vérifier après lecture (dans le rare cas size=0 ou race)
-            if (existingKeys.has(fullKey)) continue;
-
-            // ajout
-            if (currentFolderId) {
-                const folder = data.folders.find(ff => ff.id === currentFolderId);
-                if (!folder) {
-                    // si dossier supprimé entre temps, ajouter outside
-                    data.itemsOutsideFolders = data.itemsOutsideFolders || [];
-                    data.itemsOutsideFolders.push(item);
-                } else {
-                    folder.items = folder.items || [];
-                    folder.items.push(item);
-                }
-            } else {
-                data.itemsOutsideFolders = data.itemsOutsideFolders || [];
-                data.itemsOutsideFolders.push(item);
-            }
-
-            // marquer comme existant pour ce batch (évite duplicates si user sélectionne 2x le même fichier)
-            existingKeys.add(fullKey);
-        }
-
-        // Deduplicate croisé (sécurise déjà stocké)
-        dedupeSubjectData(currentSubjectId);
-
-        // sauvegarde + reset input + render
-        saveSubjectData(currentSubjectId, getSubjectData(currentSubjectId));
-        e.target.value = ''; // permet de re-sélectionner les mêmes fichiers plus tard
-        renderCurrentTab();
-    } finally {
-        isProcessingFiles = false;
+    if (!currentSubjectId) { 
+        alert('Sélectionne d\'abord une matière'); 
+        e.target.value = ''; 
+        return; 
     }
+
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const data = getSubjectData(currentSubjectId);
+
+    // Liste existante (dans et hors dossier)
+    const existing = [];
+    (data.itemsOutsideFolders || []).forEach(it => existing.push(it));
+    (data.folders || []).forEach(ff => (ff.items || []).forEach(it => existing.push(it)));
+    const existingKeys = new Set(existing.map(it => `${it.type}::${it.name}::${it.size || (it.dataURL ? it.dataURL.length : 0)}`));
+
+    // Lire les fichiers en parallèle (Promise.all pour vitesse et pas de blocage)
+    const newItems = await Promise.all(files.map(async (f) => {
+        const reader = new FileReader();
+        const dataURL = await new Promise(resolve => {
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(f);
+        });
+
+        const key = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size || dataURL.length}`;
+
+        if (existingKeys.has(key)) return null; // doublon → ignoré
+
+        return {
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            type: currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note',
+            name: f.name,
+            size: f.size || dataURL.length,
+            dataURL,
+            mime: f.type || '',
+            createdAt: new Date().toISOString()
+        };
+    }));
+
+    // Ajout de tous les fichiers valides (non null)
+    const validItems = newItems.filter(Boolean);
+    if (validItems.length > 0) {
+        if (currentFolderId) {
+            const folder = data.folders.find(ff => ff.id === currentFolderId);
+            if (folder) {
+                folder.items.push(...validItems);
+            } else {
+                data.itemsOutsideFolders.push(...validItems);
+            }
+        } else {
+            data.itemsOutsideFolders.push(...validItems);
+        }
+    }
+
+    saveSubjectData(currentSubjectId, data);
+
+    // reset input (permet re-sélectionner le même fichier après)
+    e.target.value = '';
+    renderCurrentTab();
 });
+
 
 /** FORCE clearing des conteneurs au début de renderCurrentTab (dans le cas oùl'ancienne fonction
  *  était redéfinie plusieurs fois). On redéfinit proprement renderCurrentTab ici en le wrapant.
@@ -1386,7 +1371,7 @@ deleteNoteBtn.addEventListener('click', () => {
         renderCurrentTab();
     }
 });
-        // End of scriptE
+        // End of scr iptE
     </script>
 </body>
 </html> 
