@@ -267,20 +267,18 @@
     <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full">
         <div class="container mx-auto flex justify-around">
             <a href="index.html" class="nav-item flex flex-col items-center py-3 px-4 text-gray-500 hover:text-purple-600">
-                <i data-feather="home" class="w-6 h-6"></i><span class="text-xs mt-1">Accueil</span>
+                <i data-feather="home" class="w-6 h-6"></i><span class="text-xs mt-1"> </span>
             </a>
             <a href="subjects.html" class="nav-item active flex flex-col items-center py-3 px-4 text-purple-600">
-                <i data-feather="book" class="w-6 h-6"></i><span class="text-xs mt-1">Matières</span>
+                <i data-feather="book" class="w-6 h-6"></i><span class="text-xs mt-1"> </span>
             </a>
             <a href="library.html" class="nav-item flex flex-col items-center py-3 px-4 text-gray-500 hover:text-purple-600">
-                <i data-feather="bookmark" class="w-6 h-6"></i><span class="text-xs mt-1">Bibliothèque</span>
+                <i data-feather="bookmark" class="w-6 h-6"></i><span class="text-xs mt-1"> </span>
             </a>
             <a href="schedule.html" class="nav-item flex flex-col items-center py-3 px-4 text-gray-500 hover:text-purple-600">
-                <i data-feather="calendar" class="w-6 h-6"></i><span class="text-xs mt-1">Emploi du temps</span>
+                <i data-feather="calendar" class="w-6 h-6"></i><span class="text-xs mt-1"> </span>
             </a>
-            <a href="settings.html" class="nav-item flex flex-col items-center py-3 px-4 text-gray-500 hover:text-purple-600">
-                <i data-feather="settings" class="w-6 h-6"></i><span class="text-xs mt-1">Paramètres</span>
-            </a>
+            
         </div>
     </nav>
 
@@ -1154,152 +1152,6 @@ function resetFileInput() {
                 });
             }
         }
-      
-      /*******************************
- * AJOUT à coller AVANT renderSubjects();
- *******************************/
-
-// guard pour éviter double exécution du handler
-let isProcessingFiles = false;
-
-/** clé unique pour un item : type + nom + taille (si dispo) */
-function itemKey(it) {
-    return `${it.type || ''}::${it.name || ''}::${it.size || (it.dataURL?it.dataURL.length:0)}`;
-}
-
-/** Déduplication complète du subject_data_{id} */
-function dedupeSubjectData(subjectId) {
-    const data = getSubjectData(subjectId);
-    const seen = new Set();
-
-    // helper pour filtrer une liste
-    function filterList(list) {
-        const out = [];
-        for (const it of (list || [])) {
-            const k = itemKey(it);
-            if (!seen.has(k)) {
-                seen.add(k);
-                out.push(it);
-            }
-            // si déjà vu -> ignoré
-        }
-        return out;
-    }
-
-    // dédupliquer itemsOutsideFolders
-    data.itemsOutsideFolders = filterList(data.itemsOutsideFolders || []);
-
-    // dédupliquer items inside each folder (et aussi s'assurer qu'un même item n'existe pas déjà outside)
-    for (const ff of (data.folders || [])) {
-        ff.items = filterList(ff.items || []);
-    }
-
-    saveSubjectData(subjectId, data);
-    return data;
-}
-
-/** Remplacement sûr du handler fileInput.change
- *  - évite la ré-entrée via isProcessingFiles
- *  - refuse explicitement un fichier déjà présent (même across folders)
- *  - ajoute size dans l'item pour pouvoir comparer
- */
-fileInput.removeEventListener && fileInput.removeEventListener('change', null); // safe attempt
-/** ✅ Version améliorée : ajout illimité de fichiers sans blocage ni doublons */
-/** 🚀 Version finale sans limite de taille (jusqu'à 1 Go autorisé) */
-fileInput.addEventListener('change', async (e) => {
-    if (!currentSubjectId) { 
-        alert('Sélectionne d\'abord une matière'); 
-        e.target.value = ''; 
-        return; 
-    }
-
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const data = getSubjectData(currentSubjectId);
-
-    // Liste existante (dans et hors dossier)
-    const existing = [];
-    (data.itemsOutsideFolders || []).forEach(it => existing.push(it));
-    (data.folders || []).forEach(ff => (ff.items || []).forEach(it => existing.push(it)));
-    const existingKeys = new Set(existing.map(it => `${it.type}::${it.name}::${it.size || (it.dataURL ? it.dataURL.length : 0)}`));
-
-    // Lire les fichiers en parallèle sans limite de taille
-    const newItems = await Promise.all(files.map(async (f) => {
-        const key = `${currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note'}::${f.name}::${f.size}`;
-
-        if (existingKeys.has(key)) return null; // doublon → ignoré
-
-        let dataURL = null;
-
-        // ⚙️ Pour les fichiers > 100 Mo → on n'utilise PAS base64
-        // On crée juste un lien local (plus rapide, pas de limite mémoire)
-        if (f.size > 100 * 1024 * 1024) { 
-            dataURL = URL.createObjectURL(f);
-        } else {
-            const reader = new FileReader();
-            dataURL = await new Promise(resolve => {
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(f);
-            });
-        }
-
-        return {
-            id: Date.now() + Math.floor(Math.random() * 1000),
-            type: currentTab === 'photos' ? 'photo' : currentTab === 'videos' ? 'video' : currentTab === 'documents' ? 'document' : 'note',
-            name: f.name,
-            size: f.size,
-            dataURL,
-            mime: f.type || '',
-            createdAt: new Date().toISOString()
-        };
-    }));
-
-    // Ajout de tous les fichiers valides
-    const validItems = newItems.filter(Boolean);
-    if (validItems.length > 0) {
-        if (currentFolderId) {
-            const folder = data.folders.find(ff => ff.id === currentFolderId);
-            if (folder) {
-                folder.items.push(...validItems);
-            } else {
-                data.itemsOutsideFolders.push(...validItems);
-            }
-        } else {
-            data.itemsOutsideFolders.push(...validItems);
-        }
-    }
-
-    saveSubjectData(currentSubjectId, data);
-    e.target.value = ''; // Reset pour pouvoir re-sélectionner
-    renderCurrentTab();
-});
-
-
-
-/** FORCE clearing des conteneurs au début de renderCurrentTab (dans le cas oùl'ancienne fonction
- *  était redéfinie plusieurs fois). On redéfinit proprement renderCurrentTab ici en le wrapant.
- */
-(function wrapRender() {
-    const original = renderCurrentTab;
-    renderCurrentTab = function() {
-        // vider conteneurs AVANT tout rendu (assure qu'on ne double pas l'affichage)
-        const ids = ['documents','photos','videos','notes'];
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = '';
-        });
-        // appeler l'original
-        try { original(); }
-        catch (err) {
-            // si original n'existe plus (rare), on ignore proprement
-            console.warn('renderCurrentTab original failed', err);
-        }
-        // show breadcrumb if needed (ton code existant)
-        try { showBreadcrumbIfInFolder(); } catch(e){ /* ignore */ }
-    };
-})();
-
 
         // Render initial
         renderSubjects();
@@ -1379,7 +1231,25 @@ deleteNoteBtn.addEventListener('click', () => {
         renderCurrentTab();
     }
 });
+      function showAlert(message, type = 'success') {
+    const alert = document.getElementById('alert');
+    alert.textContent = message;
+    alert.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg hidden z-50`;
+    
+    // Couleurs selon le type
+    if (type === 'success') alert.classList.add('bg-green-500', 'text-white');
+    else if (type === 'error') alert.classList.add('bg-red-500', 'text-white');
+    else if (type === 'warning') alert.classList.add('bg-yellow-500', 'text-black');
+    
+    alert.classList.remove('hidden');
+    
+    // Disparaît après 3 secondes
+    setTimeout(() => {
+        alert.classList.add('hidden');
+    }, 3000);
+}
         // End of scriptE
     </script>
+  <div id="alert" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50"></div>
 </body>
 </html> 
