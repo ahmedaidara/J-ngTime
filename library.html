@@ -37,6 +37,137 @@
             object-fit: cover;
             border-radius: 8px;
         }
+      /* Style personnalisé pour les alertes */
+.custom-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.custom-alert {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    width: 90%;
+    animation: custom-alert-slide 0.3s ease-out;
+}
+
+@keyframes custom-alert-slide {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.custom-alert-header {
+    padding: 20px 24px 0;
+    text-align: center;
+}
+
+.custom-alert-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+}
+
+.custom-alert-icon.success {
+    background: #10B981;
+    color: white;
+}
+
+.custom-alert-icon.warning {
+    background: #F59E0B;
+    color: white;
+}
+
+.custom-alert-icon.error {
+    background: #EF4444;
+    color: white;
+}
+
+.custom-alert-icon.info {
+    background: #6C63FF;
+    color: white;
+}
+
+.custom-alert-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 8px;
+}
+
+.custom-alert-message {
+    color: #6B7280;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 0 24px;
+    text-align: center;
+}
+
+.custom-alert-buttons {
+    padding: 20px 24px 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.custom-alert-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.custom-alert-btn.cancel {
+    background: #F3F4F6;
+    color: #374151;
+    border: 1px solid #D1D5DB;
+}
+
+.custom-alert-btn.cancel:hover {
+    background: #E5E7EB;
+}
+
+.custom-alert-btn.confirm {
+    background: #6C63FF;
+    color: white;
+}
+
+.custom-alert-btn.confirm:hover {
+    background: #5B52E0;
+}
+
+.custom-alert-btn.danger {
+    background: #EF4444;
+    color: white;
+}
+
+.custom-alert-btn.danger:hover {
+    background: #DC2626;
+}
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
@@ -165,7 +296,223 @@
     <script>
         // Initialize Feather Icons
         feather.replace();
+        // ----- CUSTOM ALERT SYSTEM -----
+// Remplace les alertes natives par des alertes stylisées
+
+// Fonction pour créer une alerte personnalisée
+function showCustomAlert(message, type = 'info', title = null) {
+    return new Promise((resolve) => {
+        // Types d'icônes et titres par défaut
+        const typeConfig = {
+            success: { 
+                icon: 'check', 
+                defaultTitle: 'Succès',
+                iconClass: 'success'
+            },
+            warning: { 
+                icon: 'alert-triangle', 
+                defaultTitle: 'Attention',
+                iconClass: 'warning'
+            },
+            error: { 
+                icon: 'x-circle', 
+                defaultTitle: 'Erreur',
+                iconClass: 'error'
+            },
+            info: { 
+                icon: 'info', 
+                defaultTitle: 'Information',
+                iconClass: 'info'
+            }
+        };
+
+        const config = typeConfig[type] || typeConfig.info;
+        const alertTitle = title || config.defaultTitle;
+
+        // Créer l'overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert-overlay';
         
+        // Créer l'alerte
+        const alert = document.createElement('div');
+        alert.className = 'custom-alert';
+        alert.innerHTML = `
+            <div class="custom-alert-header">
+                <div class="custom-alert-icon ${config.iconClass}">
+                    <i data-feather="${config.icon}"></i>
+                </div>
+                <h3 class="custom-alert-title">${alertTitle}</h3>
+            </div>
+            <div class="custom-alert-message">${message}</div>
+            <div class="custom-alert-buttons">
+                <button class="custom-alert-btn confirm">OK</button>
+            </div>
+        `;
+
+        overlay.appendChild(alert);
+        document.body.appendChild(overlay);
+
+        // Mettre à jour les icônes Feather
+        feather.replace();
+
+        // Gérer le bouton OK
+        const okBtn = alert.querySelector('.custom-alert-btn.confirm');
+        okBtn.focus();
+
+        function closeAlert() {
+            overlay.remove();
+            resolve(true);
+        }
+
+        okBtn.addEventListener('click', closeAlert);
+        
+        // Fermer en cliquant à l'extérieur
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeAlert();
+            }
+        });
+
+        // Fermer avec la touche Escape
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeAlert();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+// Fonction pour créer une confirmation personnalisée
+function showCustomConfirm(message, title = 'Confirmation') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert-overlay';
+        
+        const confirm = document.createElement('div');
+        confirm.className = 'custom-alert';
+        confirm.innerHTML = `
+            <div class="custom-alert-header">
+                <div class="custom-alert-icon info">
+                    <i data-feather="help-circle"></i>
+                </div>
+                <h3 class="custom-alert-title">${title}</h3>
+            </div>
+            <div class="custom-alert-message">${message}</div>
+            <div class="custom-alert-buttons">
+                <button class="custom-alert-btn cancel">Annuler</button>
+                <button class="custom-alert-btn confirm">Confirmer</button>
+            </div>
+        `;
+
+        overlay.appendChild(confirm);
+        document.body.appendChild(overlay);
+
+        feather.replace();
+
+        const cancelBtn = confirm.querySelector('.custom-alert-btn.cancel');
+        const confirmBtn = confirm.querySelector('.custom-alert-btn.confirm');
+        confirmBtn.focus();
+
+        function closeConfirm(result) {
+            overlay.remove();
+            resolve(result);
+        }
+
+        cancelBtn.addEventListener('click', () => closeConfirm(false));
+        confirmBtn.addEventListener('click', () => closeConfirm(true));
+        
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeConfirm(false);
+            }
+        });
+
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeConfirm(false);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+// Fonction pour créer un prompt personnalisé
+function showCustomPrompt(message, defaultValue = '', title = 'Saisie') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert-overlay';
+        
+        const prompt = document.createElement('div');
+        prompt.className = 'custom-alert';
+        prompt.innerHTML = `
+            <div class="custom-alert-header">
+                <div class="custom-alert-icon info">
+                    <i data-feather="edit-3"></i>
+                </div>
+                <h3 class="custom-alert-title">${title}</h3>
+            </div>
+            <div class="custom-alert-message">${message}</div>
+            <div style="padding: 0 24px 20px;">
+                <input type="text" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                       value="${defaultValue}"
+                       id="customPromptInput">
+            </div>
+            <div class="custom-alert-buttons">
+                <button class="custom-alert-btn cancel">Annuler</button>
+                <button class="custom-alert-btn confirm">Valider</button>
+            </div>
+        `;
+
+        overlay.appendChild(prompt);
+        document.body.appendChild(overlay);
+
+        feather.replace();
+
+        const input = prompt.querySelector('#customPromptInput');
+        const cancelBtn = prompt.querySelector('.custom-alert-btn.cancel');
+        const confirmBtn = prompt.querySelector('.custom-alert-btn.confirm');
+        
+        input.focus();
+        input.select();
+
+        function closePrompt(result) {
+            overlay.remove();
+            resolve(result);
+        }
+
+        cancelBtn.addEventListener('click', () => closePrompt(null));
+        confirmBtn.addEventListener('click', () => closePrompt(input.value));
+        
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                closePrompt(input.value);
+            }
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closePrompt(null);
+            }
+        });
+
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closePrompt(null);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+// Remplacer les fonctions natives
+window.alert = showCustomAlert;
+window.confirm = showCustomConfirm;
+window.prompt = showCustomPrompt;
         // Sample books data
         let books = [];
         
