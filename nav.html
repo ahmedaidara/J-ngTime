@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySync Browser - Navigateur Éducatif</title>
+    <style>
+        /* Styles généraux */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        header {
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 18px;
+            color: #6c63ff;
+        }
+        
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #6c63ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            color: #475569;
+            font-size: 18px;
+        }
+        
+        /* Barre d'adresse */
+        .address-bar {
+            background-color: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .address-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .address-input-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        .address-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border-radius: 24px;
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .address-input:focus {
+            border-color: #6c63ff;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+        
+        /* Contenu principal */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Section de bienvenue */
+        .welcome-section {
+            margin-bottom: 24px;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(135deg, #6c63ff, #8b5cf6);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-subtitle {
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .welcome-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: white;
+            color: #6c63ff;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Sites rapides */
+        .quick-sites {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e293b;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
+        }
+        
+        .site-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .site-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .site-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 20px;
+            color: #6c63ff;
+        }
+        
+        .site-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        /* Zone de navigation */
+        .browser-content {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: 500px;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .browser-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+        
+        .browser-address {
+            flex: 1;
+            padding: 8px 16px;
+            background-color: white;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+            margin: 0 12px;
+        }
+        
+        .browser-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .browser-frame {
+            flex: 1;
+            border: none;
+        }
+        
+        /* Page d'historique */
+        .history-page {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            height: 500px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .history-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .clear-history {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: #6c63ff;
+        }
+        
+        .history-details {
+            flex: 1;
+        }
+        
+        .history-url {
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .history-time {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        /* Alertes personnalisées */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .custom-alert {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 400px;
+            width: 90%;
+            animation: custom-alert-slide 0.3s ease-out;
+        }
+        
+        @keyframes custom-alert-slide {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .custom-alert-header {
+            padding: 20px 24px 0;
+            text-align: center;
+        }
+        
+        .custom-alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 24px;
+        }
+        
+        .custom-alert-icon.info {
+            background: #6C63FF;
+            color: white;
+        }
+        
+        .custom-alert-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+        
+        .custom-alert-message {
+            color: #6B7280;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 0 24px;
+            text-align: center;
+        }
+        
+        .custom-alert-buttons {
+            padding: 20px 24px 24px;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .custom-alert-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .custom-alert-btn.confirm {
+            background: #6C63FF;
+            color: white;
+        }
+        
+        .custom-alert-btn.confirm:hover {
+            background: #5B52E0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .welcome-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <span>StudySync Browser</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="historyBtn">📚</button>
+                <button class="icon-btn" id="menuBtn">⋮</button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Barre d'adresse -->
+    <div class="address-bar">
+        <div class="address-container">
+            <div class="nav-buttons">
+                <button class="icon-btn" id="backBtn">←</button>
+                <button class="icon-btn" id="forwardBtn">→</button>
+                <button class="icon-btn" id="refreshBtn">↻</button>
+            </div>
+            <div class="address-input-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="address-input" id="addressInput" placeholder="Rechercher ou saisir une adresse web">
+            </div>
+            <button class="icon-btn" id="homeBtn">🏠</button>
+        </div>
+    </div>
+    
+    <!-- Contenu principal -->
+    <main>
+        <div class="main-container">
+            <!-- Section de bienvenue -->
+            <div class="welcome-section" id="welcomeSection">
+                <div class="welcome-card">
+                    <h1 class="welcome-title">Navigateur Éducatif StudySync</h1>
+                    <p class="welcome-subtitle">Un environnement sécurisé pour apprendre et explorer le web en toute sécurité.</p>
+                    <div class="welcome-actions">
+                        <button class="btn btn-primary" id="startLearning">Commencer à apprendre</button>
+                        <button class="btn btn-outline" id="learnMore">En savoir plus</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sites rapides -->
+            <div class="quick-sites" id="quickSites">
+                <h2 class="section-title">Sites éducatifs recommandés</h2>
+                <div class="sites-grid" id="sitesGrid">
+                    <!-- Les sites seront ajoutés dynamiquement -->
+                </div>
+            </div>
+            
+            <!-- Zone de navigation -->
+            <div class="browser-content" id="browserContent">
+                <div class="browser-header">
+                    <div class="nav-buttons">
+                        <button class="icon-btn" id="browserBackBtn">←</button>
+                        <button class="icon-btn" id="browserForwardBtn">→</button>
+                        <button class="icon-btn" id="browserRefreshBtn">↻</button>
+                    </div>
+                    <div class="browser-address" id="browserAddress">https://example.com</div>
+                    <div class="browser-actions">
+                        <button class="icon-btn" id="browserHomeBtn">🏠</button>
+                    </div>
+                </div>
+                <iframe class="browser-frame" id="browserFrame" src="about:blank"></iframe>
+            </div>
+            
+            <!-- Page d'historique -->
+            <div class="history-page" id="historyPage">
+                <div class="history-header">
+                    <h2 class="history-title">Historique de navigation</h2>
+                    <button class="clear-history" id="clearHistoryBtn">Effacer l'historique</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- L'historique sera chargé ici -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Données des sites éducatifs
+        const educationalSites = [
+            { name: "Khan Academy", url: "https://www.khanacademy.org", icon: "📚", searchUrl: "https://www.khanacademy.org/search?page_search_query=" },
+            { name: "Wikipédia", url: "https://www.wikipedia.org", icon: "🌐", searchUrl: "https://fr.wikipedia.org/wiki/Spécial:Recherche?search=" },
+            { name: "National Geographic Kids", url: "https://kids.nationalgeographic.com", icon: "🌍", searchUrl: "https://kids.nationalgeographic.com/search-results?q=" },
+            { name: "Duolingo", url: "https://www.duolingo.com", icon: "🦉", searchUrl: "https://www.duolingo.com/search?query=" },
+            { name: "Code.org", url: "https://code.org", icon: "💻", searchUrl: "https://code.org/search?q=" },
+            { name: "TED-Ed", url: "https://ed.ted.com", icon: "🎤", searchUrl: "https://ed.ted.com/search?qs=" },
+            { name: "NASA Kids' Club", url: "https://www.nasa.gov/kidsclub", icon: "🚀", searchUrl: "https://www.nasa.gov/search/?q=" },
+            { name: "BBC Bitesize", url: "https://www.bbc.co.uk/bitesize", icon: "📺", searchUrl: "https://www.bbc.co.uk/bitesize/search?q=" },
+            { name: "Maths en ligne", url: "https://www.mathenligne.fr", icon: "🔢", searchUrl: "https://www.mathenligne.fr/rechercher.php?recherche=" },
+            { name: "Sciences pour tous", url: "https://www.sciencepourtous.fr", icon: "🔬", searchUrl: "https://www.sciencepourtous.fr/recherche?q=" },
+            { name: "Histoire en ligne", url: "https://www.histoire-en-ligne.fr", icon: "🏛️", searchUrl: "https://www.histoire-en-ligne.fr/spip.php?page=recherche&recherche=" },
+            { name: "Littérature française", url: "https://www.litteraturefrancaise.net", icon: "📖", searchUrl: "https://www.litteraturefrancaise.net/recherche?q=" }
+        ];
+        
+        // Liste blanche de sites autorisés
+        const allowedDomains = [
+            "khanacademy.org",
+            "wikipedia.org",
+            "nationalgeographic.com",
+            "duolingo.com",
+            "code.org",
+            "ted.com",
+            "nasa.gov",
+            "bbc.co.uk",
+            "mathenligne.fr",
+            "sciencepourtous.fr",
+            "histoire-en-ligne.fr",
+            "litteraturefrancaise.net",
+            "google.com"
+        ];
+        
+        // Éléments DOM
+        const sitesGrid = document.getElementById('sitesGrid');
+        const addressInput = document.getElementById('addressInput');
+        const browserContent = document.getElementById('browserContent');
+        const browserFrame = document.getElementById('browserFrame');
+        const browserAddress = document.getElementById('browserAddress');
+        const welcomeSection = document.getElementById('welcomeSection');
+        const quickSites = document.getElementById('quickSites');
+        const historyPage = document.getElementById('historyPage');
+        const historyList = document.getElementById('historyList');
+        const startLearningBtn = document.getElementById('startLearning');
+        const homeBtn = document.getElementById('homeBtn');
+        const browserHomeBtn = document.getElementById('browserHomeBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        
+        // Variables d'état
+        let currentSite = null;
+        let history = JSON.parse(localStorage.getItem('browserHistory')) || [];
+        let navigationHistory = [];
+        let currentHistoryIndex = -1;
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les sites éducatifs
+            loadEducationalSites();
+            
+            // Charger l'historique
+            loadHistory();
+            
+            // Événements
+            addressInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch(addressInput.value);
+                }
+            });
+            
+            startLearningBtn.addEventListener('click', function() {
+                showCustomAlert(
+                    "Bienvenue dans le navigateur éducatif StudySync!<br><br>Vous pouvez naviguer en toute sécurité sur les sites éducatifs recommandés ou utiliser la barre d'adresse pour effectuer des recherches.",
+                    "info",
+                    "Bienvenue"
+                );
+            });
+            
+            homeBtn.addEventListener('click', function() {
+                showHomePage();
+            });
+            
+            browserHomeBtn.addEventListener('click', function() {
+                showHomePage();
+            });
+            
+            historyBtn.addEventListener('click', function() {
+                showHistoryPage();
+            });
+            
+            clearHistoryBtn.addEventListener('click', function() {
+                clearHistory();
+            });
+            
+            // Boutons de navigation
+            document.getElementById('backBtn').addEventListener('click', navigateBack);
+            document.getElementById('forwardBtn').addEventListener('click', navigateForward);
+            document.getElementById('refreshBtn').addEventListener('click', refreshPage);
+            
+            document.getElementById('browserBackBtn').addEventListener('click', navigateBack);
+            document.getElementById('browserForwardBtn').addEventListener('click', navigateForward);
+            document.getElementById('browserRefreshBtn').addEventListener('click', refreshPage);
+            
+            // Afficher la page d'accueil au démarrage
+            showHomePage();
+        });
+        
+        // Charger les sites éducatifs dans la grille
+        function loadEducationalSites() {
+            sitesGrid.innerHTML = '';
+            
+            educationalSites.forEach(site => {
+                const siteCard = document.createElement('div');
+                siteCard.className = 'site-card';
+                siteCard.innerHTML = `
+                    <div class="site-icon">${site.icon}</div>
+                    <div class="site-name">${site.name}</div>
+                `;
+                
+                siteCard.addEventListener('click', function() {
+                    openSite(site);
+                });
+                
+                sitesGrid.appendChild(siteCard);
+            });
+        }
+        
+        // Ouvrir un site éducatif
+        function openSite(site) {
+            currentSite = site;
+            showBrowser();
+            browserFrame.src = site.url;
+            browserAddress.textContent = site.url;
+            addressInput.value = site.url;
+            
+            // Ajouter à l'historique
+            addToHistory(site.name, site.url);
+            addToNavigationHistory(site.url);
+        }
+        
+        // Gérer la recherche
+        function handleSearch(query) {
+            if (!query.trim()) return;
+            
+            // Si c'est une URL complète, naviguer directement
+            if (query.startsWith('http://') || query.startsWith('https://')) {
+                navigateTo(query);
+                return;
+            }
+            
+            // Si c'est un domaine simple, ajouter https://
+            if (query.includes('.') && !query.includes(' ')) {
+                navigateTo('https://' + query);
+                return;
+            }
+            
+            // Sinon, effectuer une recherche
+            performSearch(query);
+        }
+        
+        // Effectuer une recherche
+        function performSearch(query) {
+            let searchUrl;
+            
+            // Si un site est sélectionné, utiliser son moteur de recherche
+            if (currentSite) {
+                searchUrl = currentSite.searchUrl + encodeURIComponent(query);
+            } else {
+                // Sinon, utiliser Wikipedia par défaut
+                searchUrl = 'https://fr.wikipedia.org/wiki/Spécial:Recherche?search=' + encodeURIComponent(query);
+            }
+            
+            navigateTo(searchUrl);
+            
+            // Ajouter à l'historique
+            addToHistory(`Recherche: ${query}`, searchUrl);
+        }
+        
+        // Navigation vers une URL
+        function navigateTo(url) {
+            // Vérifier si le domaine est autorisé
+            const domain = extractDomain(url);
+            if (!isDomainAllowed(domain)) {
+                showCustomAlert(
+                    `Le site "${domain}" n'est pas autorisé dans ce navigateur éducatif.<br><br>Veuillez utiliser les sites recommandés ou contacter un administrateur pour demander l'ajout d'un site éducatif.`,
+                    "info",
+                    "Site non autorisé"
+                );
+                return;
+            }
+            
+            // Afficher le navigateur
+            showBrowser();
+            browserFrame.src = url;
+            browserAddress.textContent = url;
+            addressInput.value = url;
+            
+            // Ajouter à l'historique de navigation
+            addToNavigationHistory(url);
+        }
+        
+        // Extraire le domaine d'une URL
+        function extractDomain(url) {
+            try {
+                const domain = new URL(url).hostname;
+                return domain.startsWith('www.') ? domain.substring(4) : domain;
+            } catch (e) {
+                return url;
+            }
+        }
+        
+        // Vérifier si un domaine est autorisé
+        function isDomainAllowed(domain) {
+            return allowedDomains.some(allowed => 
+                domain === allowed || domain.endsWith('.' + allowed)
+            );
+        }
+        
+        // Afficher la page d'accueil
+        function showHomePage() {
+            browserContent.style.display = 'none';
+            historyPage.style.display = 'none';
+            welcomeSection.style.display = 'block';
+            quickSites.style.display = 'block';
+            addressInput.value = '';
+            addressInput.focus();
+            currentSite = null;
+        }
+        
+        // Afficher le navigateur
+        function showBrowser() {
+            browserContent.style.display = 'flex';
+            historyPage.style.display = 'none';
+            welcomeSection.style.display = 'none';
+            quickSites.style.display = 'none';
+        }
+        
+        // Afficher la page d'historique
+        function showHistoryPage() {
+            browserContent.style.display = 'none';
+            historyPage.style.display = 'flex';
+            welcomeSection.style.display = 'none';
+            quickSites.style.display = 'none';
+            loadHistory();
+        }
+        
+        // Navigation arrière
+        function navigateBack() {
+            if (currentHistoryIndex > 0) {
+                currentHistoryIndex--;
+                const url = navigationHistory[currentHistoryIndex];
+                browserFrame.src = url;
+                browserAddress.textContent = url;
+                addressInput.value = url;
+            } else {
+                showCustomAlert("Aucune page précédente dans l'historique", "info");
+            }
+        }
+        
+        // Navigation avant
+        function navigateForward() {
+            if (currentHistoryIndex < navigationHistory.length - 1) {
+                currentHistoryIndex++;
+                const url = navigationHistory[currentHistoryIndex];
+                browserFrame.src = url;
+                browserAddress.textContent = url;
+                addressInput.value = url;
+            } else {
+                showCustomAlert("Aucune page suivante dans l'historique", "info");
+            }
+        }
+        
+        // Actualiser la page
+        function refreshPage() {
+            if (browserContent.style.display === 'flex') {
+                browserFrame.contentWindow.location.reload();
+            }
+        }
+        
+        // Ajouter à l'historique de navigation
+        function addToNavigationHistory(url) {
+            // Ne pas ajouter si c'est la même URL que la dernière
+            if (navigationHistory.length > 0 && navigationHistory[navigationHistory.length - 1] === url) {
+                return;
+            }
+            
+            navigationHistory.push(url);
+            currentHistoryIndex = navigationHistory.length - 1;
+            
+            // Limiter l'historique à 50 entrées
+            if (navigationHistory.length > 50) {
+                navigationHistory.shift();
+                currentHistoryIndex--;
+            }
+        }
+        
+        // Ajouter à l'historique
+        function addToHistory(title, url) {
+            const historyItem = {
+                title: title,
+                url: url,
+                timestamp: new Date().toISOString(),
+                time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            history.unshift(historyItem);
+            
+            // Limiter l'historique à 100 entrées
+            if (history.length > 100) {
+                history.pop();
+            }
+            
+            // Sauvegarder dans le localStorage
+            localStorage.setItem('browserHistory', JSON.stringify(history));
+        }
+        
+        // Charger l'historique
+        function loadHistory() {
+            historyList.innerHTML = '';
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">Aucun historique de navigation</p>';
+                return;
+            }
+            
+            history.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-icon">🔍</div>
+                    <div class="history-details">
+                        <div class="history-url">${item.title}</div>
+                        <div class="history-time">${item.time}</div>
+                    </div>
+                `;
+                
+                historyItem.addEventListener('click', function() {
+                    navigateTo(item.url);
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // Effacer l'historique
+        function clearHistory() {
+            history = [];
+            localStorage.setItem('browserHistory', JSON.stringify(history));
+            loadHistory();
+            showCustomAlert("L'historique a été effacé", "info");
+        }
+        
+        // Système d'alertes personnalisées
+        function showCustomAlert(message, type = 'info', title = null) {
+            return new Promise((resolve) => {
+                const config = { 
+                    icon: 'info', 
+                    defaultTitle: 'Information',
+                    iconClass: 'info'
+                };
+                
+                const alertTitle = title || config.defaultTitle;
+
+                // Créer l'overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-alert-overlay';
+                
+                // Créer l'alerte
+                const alert = document.createElement('div');
+                alert.className = 'custom-alert';
+                alert.innerHTML = `
+                    <div class="custom-alert-header">
+                        <div class="custom-alert-icon ${config.iconClass}">
+                            <span>ℹ️</span>
+                        </div>
+                        <h3 class="custom-alert-title">${alertTitle}</h3>
+                    </div>
+                    <div class="custom-alert-message">${message}</div>
+                    <div class="custom-alert-buttons">
+                        <button class="custom-alert-btn confirm">OK</button>
+                    </div>
+                `;
+
+                overlay.appendChild(alert);
+                document.body.appendChild(overlay);
+
+                // Gérer le bouton OK
+                const okBtn = alert.querySelector('.custom-alert-btn.confirm');
+                okBtn.focus();
+
+                function closeAlert() {
+                    overlay.remove();
+                    resolve(true);
+                }
+
+                okBtn.addEventListener('click', closeAlert);
+                
+                // Fermer en cliquant à l'extérieur
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        closeAlert();
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
