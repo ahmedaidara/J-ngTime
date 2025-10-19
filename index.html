@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudySync - Accueil</title>
+    <title>JàngTime - Accueil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -270,16 +270,19 @@ input[type=number] {
             
 
             
-           <div class="flex items-center space-x-4">
+     <div class="flex items-center space-x-4">
+    <!-- AJOUTER CETTE LIGNE - Icône recherche -->
+    <button onclick="showPage('browser-page')" class="text-gray-600 hover:text-purple-600">
+        <i data-feather="search" class="w-6 h-6"></i>
+    </button>
    
     <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden flex-shrink-0">
         <i data-feather="user" class="text-purple-600" id="headerProfileIcon"></i>
     </div>
-              <button onclick="showPage('settings-page')" class="text-gray-600 hover:text-purple-600">
+    <button onclick="showPage('settings-page')" class="text-gray-600 hover:text-purple-600">
         <i data-feather="settings" class="w-6 h-6"></i>
     </button>
 </div>
-        </div>
     </header>
 
     <!-- Page Accueil -->
@@ -778,6 +781,26 @@ input[type=number] {
     
 </main>
   
+      <!-- Page Navigateur (à ajouter après privacy-page) -->
+<main id="browser-page" class="page" style="margin: 0; padding: 0;">
+    <iframe 
+        src="nav.html"
+        style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            border: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        "
+        scrolling="no"
+    ></iframe>
+</main>
+
+
     <!-- Bottom Navigation -->
   <!-- Bottom Navigation -->
 <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full">
