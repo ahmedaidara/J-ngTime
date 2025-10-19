@@ -464,7 +464,6 @@
            <div class="nav-buttons">
     <button class="icon-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
     <button class="icon-btn" id="forwardBtn"><i class="fas fa-arrow-right"></i></button>
-   
     <button class="icon-btn" id="historyBtnBar"><i class="fas fa-history"></i></button>
 </div>
             <div class="address-input-container">
@@ -518,21 +517,51 @@
 
     <script>
         // Données des sites éducatifs
-     const educationalSites = [
+   const educationalSites = [
     { name: "Wikipédia", url: "https://www.wikipedia.org", icon: "fas fa-globe", searchUrl: "https://fr.wikipedia.org/wiki/Sp%C3%A9cial:Recherche?search=" },
-    { name: "Sunudaara", url: "https://www.sunudaara.com", icon: "fas fa-book", searchUrl: "https://www.sunudaara.com/search?q=" },
+  
     { name: "Toupty", url: "https://www.toupty.com", icon: "fas fa-search", searchUrl: "https://www.toupty.com/search?q=" },
     { name: "Maths et Tiques", url: "https://maths-et-tiques.fr", icon: "fas fa-calculator", searchUrl: "https://maths-et-tiques.fr/search?q=" },
-    { name: "Office du Bac SN", url: "https://officedubac.sn", icon: "fas fa-university", searchUrl: "https://officedubac.sn/search?q=" }
+    { name: "Office du Bac SN", url: "https://officedubac.sn", icon: "fas fa-university", searchUrl: "https://officedubac.sn/search?q=" },
+  
+    { name: "Archive.org", url: "https://archive.org", icon: "fas fa-archive", searchUrl: "https://archive.org/search.php?query=" },
+
+ 
+    { name: "Quizlet", url: "https://quizlet.com", icon: "fas fa-brain", searchUrl: "https://quizlet.com/subject/" },
+  
+    { name: "OpenClassrooms", url: "https://openclassrooms.com", icon: "fas fa-desktop", searchUrl: "https://openclassrooms.com/fr/courses?q=" },
+  
+  
+   
+    { name: "Project Gutenberg", url: "https://www.gutenberg.org", icon: "fas fa-book-reader", searchUrl: "https://www.gutenberg.org/ebooks/search/?query=" },
+   
+  
+    { name: "GeoGebra", url: "https://www.geogebra.org", icon: "fas fa-chart-line", searchUrl: "https://www.geogebra.org/search/" },
+    { name: "Codecademy", url: "https://www.codecademy.com", icon: "fas fa-code", searchUrl: "https://www.codecademy.com/search?query=" }
 ];
         
         // Liste blanche de sites autorisés
-      const allowedDomains = [
+    const allowedDomains = [
     "wikipedia.org",
     "sunudaara.com",
     "toupty.com",
     "maths-et-tiques.fr",
-    "officedubac.sn"
+    "officedubac.sn",
+    "wattpad.com",
+    "archive.org",
+    "khanacademy.org",
+    "duolingo.com",
+    "quizlet.com",
+    "coursera.org",
+    "openclassrooms.com",
+    "chatgpt.com",
+    "perplexity.ai",
+    "scholar.google.com",
+    "gutenberg.org",
+    "libretexts.org",
+    "wolframalpha.com",
+    "geogebra.org",
+    "codecademy.com"
 ];
         
         // Éléments DOM
@@ -635,17 +664,17 @@
         }
         
         // Ouvrir un site éducatif
-        function openSite(site) {
-            currentSite = site;
-            showBrowser();
-            browserFrame.src = site.url;
-            browserAddress.value = site.url;
-            addressInput.value = site.url;
-            
-            // Ajouter à l'historique
-            addToHistory(site.name, site.url);
-            addToNavigationHistory(site.url);
-        }
+     function openSite(site) {
+    currentSite = site;
+    showBrowser();
+    browserFrame.src = site.url;
+    browserAddress.value = site.url;
+    addressInput.value = site.url;
+    
+    // Ajouter à l'historique
+    addToHistory(site.name, site.url);
+    addToNavigationHistory(site.url);
+}
         
         // Gérer la recherche
         function handleSearch(query) {
@@ -686,27 +715,27 @@
         }
         
         // Navigation vers une URL
-        function navigateTo(url) {
-            // Vérifier si le domaine est autorisé
-            const domain = extractDomain(url);
-            if (!isDomainAllowed(domain)) {
-                showCustomAlert(
-                    `Le site "${domain}" n'est pas autorisé dans ce navigateur éducatif.<br><br>Veuillez utiliser les sites recommandés ou contacter un administrateur pour demander l'ajout d'un site éducatif.`,
-                    "info",
-                    "Site non autorisé"
-                );
-                return;
-            }
-            
-            // Afficher le navigateur
-            showBrowser();
-            browserFrame.src = url;
-            browserAddress.value = url;
-            addressInput.value = url;
-            
-            // Ajouter à l'historique de navigation
-            addToNavigationHistory(url);
-        }
+      function navigateTo(url) {
+    // Vérifier si le domaine est autorisé
+    const domain = extractDomain(url);
+    if (!isDomainAllowed(domain)) {
+        showCustomAlert(
+            `Le site "${domain}" n'est pas autorisé dans ce navigateur éducatif.<br><br>Veuillez utiliser les sites recommandés ou contacter un administrateur pour demander l'ajout d'un site éducatif.`,
+            "info",
+            "Site non autorisé"
+        );
+        return;
+    }
+    
+    // Afficher le navigateur
+    showBrowser();
+    browserFrame.src = url;
+    browserAddress.value = url;
+    addressInput.value = url;
+    
+    // Ajouter à l'historique de navigation
+    addToNavigationHistory(url);
+}
         
         // Extraire le domaine d'une URL
         function extractDomain(url) {
@@ -758,30 +787,35 @@ function showHistoryPage() {
 }
         
         // Navigation arrière
-        function navigateBack() {
-            if (currentHistoryIndex > 0) {
-                currentHistoryIndex--;
-                const url = navigationHistory[currentHistoryIndex];
-                browserFrame.src = url;
-                browserAddress.value = url;
-                addressInput.value = url;
-            } else {
-                showCustomAlert("Aucune page précédente dans l'historique", "info");
-            }
+     // Navigation arrière
+function navigateBack() {
+    if (browserContent.style.display === 'flex') {
+        if (currentHistoryIndex > 0) {
+            currentHistoryIndex--;
+            const url = navigationHistory[currentHistoryIndex];
+            browserFrame.src = url;
+            browserAddress.value = url;
+            addressInput.value = url;
+        } else {
+            showCustomAlert("Aucune page précédente dans l'historique", "info");
         }
-        
-        // Navigation avant
-        function navigateForward() {
-            if (currentHistoryIndex < navigationHistory.length - 1) {
-                currentHistoryIndex++;
-                const url = navigationHistory[currentHistoryIndex];
-                browserFrame.src = url;
-                browserAddress.value = url;
-                addressInput.value = url;
-            } else {
-                showCustomAlert("Aucune page suivante dans l'historique", "info");
-            }
+    }
+}
+
+// Navigation avant
+function navigateForward() {
+    if (browserContent.style.display === 'flex') {
+        if (currentHistoryIndex < navigationHistory.length - 1) {
+            currentHistoryIndex++;
+            const url = navigationHistory[currentHistoryIndex];
+            browserFrame.src = url;
+            browserAddress.value = url;
+            addressInput.value = url;
+        } else {
+            showCustomAlert("Aucune page suivante dans l'historique", "info");
         }
+    }
+}
         
         // Actualiser la page
         function refreshPage() {
@@ -791,21 +825,30 @@ function showHistoryPage() {
         }
         
         // Ajouter à l'historique de navigation
-        function addToNavigationHistory(url) {
-            // Ne pas ajouter si c'est la même URL que la dernière
-            if (navigationHistory.length > 0 && navigationHistory[navigationHistory.length - 1] === url) {
-                return;
-            }
-            
-            navigationHistory.push(url);
-            currentHistoryIndex = navigationHistory.length - 1;
-            
-            // Limiter l'historique à 50 entrées
-            if (navigationHistory.length > 50) {
-                navigationHistory.shift();
-                currentHistoryIndex--;
-            }
-        }
+      // Ajouter à l'historique de navigation
+function addToNavigationHistory(url) {
+    // Si on navigue en arrière puis ouvre une nouvelle page, supprimer l'historique futur
+    if (currentHistoryIndex < navigationHistory.length - 1) {
+        navigationHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
+    }
+    
+    // Ne pas ajouter si c'est la même URL que la dernière
+    if (navigationHistory.length > 0 && navigationHistory[navigationHistory.length - 1] === url) {
+        return;
+    }
+    
+    navigationHistory.push(url);
+    currentHistoryIndex = navigationHistory.length - 1;
+    
+    // Limiter l'historique à 50 entrées
+    if (navigationHistory.length > 50) {
+        navigationHistory.shift();
+        currentHistoryIndex--;
+    }
+    
+    console.log('Navigation History:', navigationHistory); // Pour debug
+    console.log('Current Index:', currentHistoryIndex); // Pour debug
+}
         
         // Ajouter à l'historique
         function addToHistory(title, url) {
