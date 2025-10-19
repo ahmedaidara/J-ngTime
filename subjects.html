@@ -183,6 +183,21 @@
 .custom-alert-btn.danger:hover {
     background: #DC2626;
 }
+      /* Style pour le bouton supprimer des fichiers */
+.delete-file-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-file-btn:hover {
+    background: #dc2626 !important;
+    opacity: 1 !important;
+}
+
+/* Afficher le bouton au survol de la carte */
+.subject-card:hover .delete-file-btn,
+.bg-white.border.rounded.shadow-sm:hover .delete-file-btn {
+    opacity: 1 !important;
+}
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
@@ -971,11 +986,14 @@ if (tab === 'photos') {
                 <video src="${item.dataURL}" class="w-full h-full object-cover" muted></video>
             </div>`;
         } else if (item.type === 'document') {
-            card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700">
-                <i data-feather="file" class="w-8 h-8 text-gray-400 mr-2"></i>
-                ${item.name}
-            </div>`;
-        } else if (item.type === 'note') {
+    card.innerHTML += `<div class="h-24 flex items-center justify-center text-sm text-gray-700 relative">
+        <i data-feather="file" class="w-8 h-8 text-gray-400 mr-2"></i>
+        ${item.name}
+        ${currentTab === 'documents' ? `<button class="delete-file-btn absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 transition-opacity" data-id="${item.id}" title="Supprimer">
+            <i data-feather="trash-2" class="w-3 h-3"></i>
+        </button>` : ''}
+    </div>`;
+} else if (item.type === 'note') {
             card.innerHTML += `<div class="h-36 p-3 overflow-hidden text-sm bg-yellow-50 rounded">${item.content ? item.content.substring(0,200) + '...' : 'Nouvelle note'}</div>`;
         }
 
@@ -994,7 +1012,28 @@ if (tab === 'photos') {
         });
 
         container.appendChild(card);
+      // Breadcrumb
+showBreadcrumbIfInFolder();
+
+// --- AJOUTEZ ICI --- (début)
+// Gestionnaire pour les boutons supprimer des documents - VERSION CORRIGÉE
+document.querySelectorAll('.delete-file-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const itemId = parseInt(btn.dataset.id);
+        
+        if (confirm('Supprimer ce document ?')) {
+            console.log('Deleting item:', itemId);
+            deleteItem(itemId);
+        }
+    });
+});
+// --- AJOUTEZ ICI --- (fin)
+
+feather.replace();
         feather.replace();
+      
     };
 
     // Fonction pour ajouter les dossiers UNIQUEMENT dans le conteneur actuel
@@ -1078,7 +1117,21 @@ function getFilteredItems() {
 
     // Breadcrumb
     showBreadcrumbIfInFolder();
-    
+    // --- AJOUTEZ ICI --- (début)
+// Gestionnaire pour les boutons supprimer des documents
+setTimeout(() => {
+    document.querySelectorAll('.delete-file-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const itemId = btn.dataset.id;
+            if (confirm('Supprimer ce document ?')) {
+                deleteItem(itemId);
+            }
+        });
+    });
+}, 100);
+// --- AJOUTEZ ICI --- (fin)
+
     feather.replace();
 }
 function showBreadcrumbIfInFolder() {
@@ -1202,19 +1255,37 @@ function showBreadcrumbIfInFolder() {
         });
 
         // Delete item
-        function deleteItem(itemId) {
-            const data = getSubjectData(currentSubjectId);
-            if (currentFolderId) {
-                const f = data.folders.find(ff=>ff.id===currentFolderId);
-                if (f) f.items = f.items.filter(i=>i.id!==itemId);
-            } else {
-                data.itemsOutsideFolders = (data.itemsOutsideFolders || []).filter(i=>i.id!==itemId);
-            }
-            // also remove from any folders (safe)
-            data.folders.forEach(ff => ff.items = ff.items.filter(i=>i.id!==itemId));
-            saveSubjectData(currentSubjectId, data);
-            renderCurrentTab();
+     // Delete item - VERSION CORRIGÉE
+function deleteItem(itemId) {
+    const data = getSubjectData(currentSubjectId);
+    let found = false;
+    
+    if (currentFolderId) {
+        const f = data.folders.find(ff => ff.id === currentFolderId);
+        if (f) {
+            const beforeCount = f.items.length;
+            f.items = f.items.filter(i => i.id !== parseInt(itemId));
+            found = f.items.length !== beforeCount;
         }
+    } else {
+        const beforeCount = data.itemsOutsideFolders.length;
+        data.itemsOutsideFolders = (data.itemsOutsideFolders || []).filter(i => i.id !== parseInt(itemId));
+        found = data.itemsOutsideFolders.length !== beforeCount;
+    }
+    
+    // also remove from any folders (safe)
+    data.folders.forEach(ff => {
+        ff.items = ff.items.filter(i => i.id !== parseInt(itemId));
+    });
+    
+    saveSubjectData(currentSubjectId, data);
+    
+    if (found) {
+        renderCurrentTab();
+    } else {
+        console.error('Item not found:', itemId);
+    }
+}
 
         // Add files through input
        fileInput.addEventListener('change', async (e) => {
@@ -1579,6 +1650,8 @@ deleteNoteBtn.addEventListener('click', () => {
         renderCurrentTab();
     }
 });
+      
+      
       function showAlert(message, type = 'success') {
     const alert = document.getElementById('alert');
     alert.textContent = message;
